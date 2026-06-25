@@ -1,0 +1,26 @@
+# Python
+backend/.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Env / secrets — NEVER commit keys
+.env
+*.env
+!.env.example
+
+# Vector store / generated indexes
+backend/data/chroma/
+backend/data/*.index
+backend/storage/
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
