@@ -23,6 +23,7 @@ CHROMA_DIR = DATA_DIR / "chroma"  # gitignored; created on first index
 
 # --- Keys ---
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+DEEPGRAM_API_KEY = os.getenv("DEEPGRAM_API_KEY")
 
 # --- Models ---
 # Most capable Claude model; has native citations for verifiable grounding.
@@ -32,6 +33,11 @@ ANSWER_MODEL = "claude-opus-4-8"
 CONTEXT_MODEL = "claude-haiku-4-5"
 # Local cross-encoder reranker (no per-query API cost).
 RERANK_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+
+# --- Voice (Deepgram) ---
+# ASR: Nova is Deepgram's most accurate general model. TTS: Aura voice.
+ASR_MODEL = "nova-2"
+TTS_MODEL = "aura-asteria-en"  # natural female English voice; swappable
 
 # --- Chunking (parent-child) ---
 CHILD_CHUNK_TOKENS = 300   # small chunks: precise matching for retrieval
@@ -52,3 +58,13 @@ def require_anthropic_key() -> str:
             "(see .env.example). Get a key at https://console.anthropic.com/."
         )
     return ANTHROPIC_API_KEY
+
+
+def require_deepgram_key() -> str:
+    """Return the Deepgram key or raise a clear error explaining how to fix it."""
+    if not DEEPGRAM_API_KEY:
+        raise RuntimeError(
+            "DEEPGRAM_API_KEY is not set. Add it to backend/.env "
+            "(see .env.example). Get a key at https://console.deepgram.com/."
+        )
+    return DEEPGRAM_API_KEY

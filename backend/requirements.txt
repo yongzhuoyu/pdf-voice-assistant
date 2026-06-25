@@ -10,9 +10,11 @@ pypdf>=5                 # text + per-page extraction (already used to build the
 # --- Config / plumbing ---
 python-dotenv>=1         # load ANTHROPIC_API_KEY (and later DEEPGRAM_API_KEY) from .env
 
-# --- Day 2+ (declared now so the env is stable; harmless until used) ---
+# --- API + voice (Day 2) ---
 fastapi>=0.115
 uvicorn[standard]>=0.30
+python-multipart>=0.0.9  # FastAPI file uploads (audio in)
+httpx>=0.27              # Deepgram REST calls (ASR/TTS); also an anthropic dep
 
 # --- Testing (a graded deliverable) ---
 pytest>=8
