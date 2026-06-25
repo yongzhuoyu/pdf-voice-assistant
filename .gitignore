@@ -10,9 +10,10 @@ __pycache__/
 *.env
 !.env.example
 
-# Vector store / generated indexes
+# Vector store / generated indexes (rebuildable via scripts/index.py)
 backend/data/chroma/
 backend/data/*.index
+backend/data/chunks.json
 backend/storage/
 
 # Node / frontend
@@ -24,3 +25,6 @@ frontend/.vite/
 .DS_Store
 .vscode/
 .idea/
+
+# Claude Code local tooling config (session-specific, not project source)
+.claude/

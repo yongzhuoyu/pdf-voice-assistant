@@ -1,0 +1,18 @@
+# --- Core RAG pipeline (Day 1) ---
+anthropic>=0.69          # Claude API: contextualizer + grounded generation w/ native citations
+chromadb>=0.5            # local vector store (embeddings + dense search)
+rank-bm25>=0.2.2         # BM25 lexical search (the hybrid-search other half)
+sentence-transformers>=3 # local cross-encoder reranker (no API cost per query)
+
+# --- PDF parsing ---
+pypdf>=5                 # text + per-page extraction (already used to build the test PDF)
+
+# --- Config / plumbing ---
+python-dotenv>=1         # load ANTHROPIC_API_KEY (and later DEEPGRAM_API_KEY) from .env
+
+# --- Day 2+ (declared now so the env is stable; harmless until used) ---
+fastapi>=0.115
+uvicorn[standard]>=0.30
+
+# --- Testing (a graded deliverable) ---
+pytest>=8
