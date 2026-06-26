@@ -1,0 +1,83 @@
+/*
+  Design system — "Library" theme executed with enterprise restraint.
+
+  The look: a quiet reading room. Warm paper background, ink-dark serif text,
+  a single oxblood accent used sparingly, generous whitespace. Citations render
+  like margin notes. No gradients, no glassmorphism, no generic-AI purple.
+
+  All design tokens live here as CSS variables so the whole app stays
+  consistent and is easy to retune.
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Newsreader:ital,opsz@0,6..72;1,6..72&display=swap');
+
+:root {
+  /* Palette */
+  --paper:        #F4F1E8;  /* aged-paper background */
+  --paper-deep:   #ECE7D9;  /* slightly darker panels */
+  --ink:          #2B2724;  /* primary text */
+  --ink-soft:     #5C554E;  /* secondary text */
+  --ink-faint:    #8B8378;  /* captions, hints */
+  --oxblood:      #8B4A3B;  /* the one accent */
+  --oxblood-deep: #6F3A2E;  /* accent hover */
+  --rule:         #D8D1C0;  /* hairline borders */
+  --rule-soft:    #E4DECF;
+
+  /* Type */
+  --serif-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --serif-body:    'Newsreader', Georgia, serif;
+
+  /* Spacing rhythm */
+  --pad: 1.5rem;
+  --radius: 4px;
+
+  color-scheme: light;
+  font-family: var(--serif-body);
+  color: var(--ink);
+  background: var(--paper);
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--paper);
+}
+
+body {
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+/* Subtle paper grain — barely-there texture, not skeuomorphic clip-art. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.025;
+  z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+h1, h2, h3 {
+  font-family: var(--serif-display);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin: 0;
+}
+
+button {
+  font-family: var(--serif-body);
+  cursor: pointer;
+}
+
+::selection {
+  background: var(--oxblood);
+  color: var(--paper);
+}

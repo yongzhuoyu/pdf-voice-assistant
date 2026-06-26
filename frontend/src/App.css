@@ -1,0 +1,240 @@
+/* Layout for the Library theme. Centered reading column with a citation margin. */
+
+.page {
+  position: relative;
+  z-index: 1;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 4rem 2rem 3rem;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Masthead --- */
+.masthead {
+  text-align: center;
+  padding-bottom: 2.5rem;
+  margin-bottom: 2.5rem;
+  border-bottom: 1px solid var(--rule);
+}
+.kicker {
+  font-family: var(--serif-body);
+  font-style: italic;
+  color: var(--oxblood);
+  letter-spacing: 0.02em;
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+}
+.title {
+  font-size: clamp(2.6rem, 6vw, 4rem);
+  line-height: 1.02;
+}
+.subtitle {
+  color: var(--ink-soft);
+  max-width: 34rem;
+  margin: 1rem auto 0;
+  font-size: 1.05rem;
+}
+
+/* --- Ask zone: mic + text form --- */
+.reading { flex: 1; }
+.ask-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+/* Mic button: the hero control. A quiet oxblood disc with a live pulse ring. */
+.mic {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: 1px solid var(--oxblood);
+  background: var(--paper-deep);
+  color: var(--oxblood);
+  display: grid;
+  place-items: center;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.mic:hover:not(:disabled) { background: var(--oxblood); color: var(--paper); }
+.mic:disabled { opacity: 0.4; cursor: not-allowed; }
+.mic-on { background: var(--oxblood); color: var(--paper); border-color: var(--oxblood); }
+.mic-glyph { font-size: 1.5rem; line-height: 1; z-index: 1; }
+.mic-ring {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 1px solid var(--oxblood);
+  opacity: 0;
+  transition: transform 0.08s ease-out;
+}
+.mic-on .mic-ring { opacity: 0.5; }
+
+.ask {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 46rem;
+}
+.ask-input {
+  flex: 1;
+  font-family: var(--serif-body);
+  font-size: 1.1rem;
+  color: var(--ink);
+  background: var(--paper-deep);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 0.85rem 1.1rem;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+.ask-input::placeholder { color: var(--ink-faint); font-style: italic; }
+.ask-input:focus { border-color: var(--oxblood); }
+
+.ask-btn {
+  font-size: 1.05rem;
+  color: var(--paper);
+  background: var(--oxblood);
+  border: 1px solid var(--oxblood);
+  border-radius: var(--radius);
+  padding: 0.85rem 1.8rem;
+  transition: background 0.15s ease;
+}
+.ask-btn:hover:not(:disabled) { background: var(--oxblood-deep); }
+.ask-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* --- Notices --- */
+.hint, .notice {
+  text-align: center;
+  color: var(--ink-faint);
+  font-style: italic;
+  max-width: 36rem;
+  margin: 2rem auto;
+}
+.notice.error { color: var(--oxblood-deep); font-style: normal; }
+
+/* --- Answer: two-column reading + margin --- */
+.answer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 17rem;
+  gap: 2.5rem;
+  max-width: 60rem;
+  margin: 0 auto;
+  align-items: start;
+}
+.answer-body p {
+  margin: 0 0 1.1rem;
+  font-size: 1.18rem;
+  line-height: 1.7;
+  color: var(--ink);
+}
+.prose p:first-of-type::first-letter {
+  font-family: var(--serif-display);
+  font-size: 3.1rem;
+  line-height: 0.8;
+  float: left;
+  padding: 0.1rem 0.6rem 0 0;
+  color: var(--oxblood);
+}
+.prose.no-dropcap p:first-of-type::first-letter {
+  font-size: inherit;
+  float: none;
+  padding: 0;
+  color: inherit;
+}
+
+/* What the user said (voice mode) — quiet italic lead-in. */
+.transcript {
+  font-style: italic;
+  color: var(--ink-soft);
+  border-left: 2px solid var(--oxblood);
+  padding-left: 1rem;
+  margin: 0 0 1.5rem;
+  font-size: 1.05rem;
+}
+.transcript-label {
+  display: block;
+  font-family: var(--serif-display);
+  font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.68rem;
+  color: var(--ink-faint);
+  margin-bottom: 0.2rem;
+}
+.notice.status { color: var(--oxblood); font-style: italic; }
+.oos-flag {
+  display: inline-block;
+  font-style: italic;
+  color: var(--oxblood-deep);
+  border: 1px solid var(--rule);
+  background: var(--paper-deep);
+  padding: 0.25rem 0.7rem;
+  border-radius: var(--radius);
+  margin-bottom: 1.2rem;
+}
+
+/* --- Margin notes (citations) --- */
+.margin {
+  border-left: 1px solid var(--rule);
+  padding-left: 1.6rem;
+  position: sticky;
+  top: 2rem;
+}
+.margin-head {
+  font-family: var(--serif-display);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  margin: 0 0 1rem;
+}
+.margin-notes { list-style: none; margin: 0; padding: 0; counter-reset: note; }
+.margin-note {
+  margin-bottom: 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.cite-loc {
+  font-family: var(--serif-display);
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--oxblood);
+}
+.cite-title { font-size: 0.9rem; color: var(--ink-soft); }
+.cite-quote {
+  font-size: 0.86rem;
+  font-style: italic;
+  color: var(--ink-faint);
+  line-height: 1.45;
+  margin-top: 0.15rem;
+}
+
+/* --- Colophon --- */
+.colophon {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--rule);
+  text-align: center;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--ink-faint);
+}
+
+/* --- Responsive: collapse margin under the answer on narrow screens --- */
+@media (max-width: 760px) {
+  .answer { grid-template-columns: 1fr; gap: 1.5rem; }
+  .margin {
+    border-left: none;
+    border-top: 1px solid var(--rule);
+    padding-left: 0;
+    padding-top: 1.5rem;
+    position: static;
+  }
+  .ask { flex-direction: column; }
+}
