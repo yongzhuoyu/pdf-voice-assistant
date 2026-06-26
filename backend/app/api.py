@@ -42,9 +42,10 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="PDF Voice Assistant", lifespan=lifespan)
 
 # Allow the React dev server (Day 3) to call us from a different origin.
+# Match any localhost port so Vite picking 5173/5174/etc. just works in dev.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1):\d+",
     allow_methods=["*"],
     allow_headers=["*"],
 )

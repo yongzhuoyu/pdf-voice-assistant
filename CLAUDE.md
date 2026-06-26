@@ -81,30 +81,41 @@ rewards depth; these are where week-long projects spread thin.
 
 ## Current status
 
-**Setup complete:**
-- Project scaffolded: `backend/` (FastAPI) + `frontend/` (React).
-- Python venv at `backend/.venv` with `reportlab`, `pypdf`.
-- **Test data generated:** *The Adventures of Sherlock Holmes* (12 stories = 12
-  chapters) → `backend/data/sherlock.pdf` (228 pages). Source text in
-  `backend/data/sherlock.txt`. Converter: `backend/scripts/make_pdf.py`.
-- Verified: all 12 chapter headings survive PDF text extraction.
+**Day 1 COMPLETE — retrieval core, headless, verified.**
+- `app/parser.py`: chapter detection by **font size** (headings are larger than
+  body text; no hard-coded titles). Reassembles wrapped headings, ignores
+  scene-break numerals. 12 chapters, pp.1-227.
+- `app/chunker.py`: parent-child chunks (116 parents ~1200 tok, 544 children
+  ~300 tok) with chapter/page metadata.
+- `app/contextualizer.py`: Anthropic Contextual Retrieval via Haiku + prompt
+  caching (6.58M cached tokens vs 147K uncached on the full book).
+- `app/indexer.py`: hybrid index — Chroma dense + BM25 over contextualized text.
+- `app/retriever.py`: hybrid search → RRF → cross-encoder rerank → parent expansion.
+- `app/answerer.py`: Opus 4.8 grounded answers with **native citations** → chapter/page.
+- `app/store.py` + `scripts/index.py` (build) + `scripts/ask.py` (headless Q&A).
+- `tests/`: 14 passing unit tests (parser + chunker).
 
-**Known gotchas for the parser (document the critical judgment):**
-- Chapter headings line-wrap in extraction (e.g. "VII. THE ADVENTURE OF THE BLUE").
-- The book reuses `I. II. III.` for BOTH chapter numbers AND internal scene breaks.
-  Chapters have a TITLE after the numeral; bare sub-sections don't. Cross-reference
-  against the known title list rather than trusting naive regex.
+**Day 2 COMPLETE — API + voice, verified end-to-end.**
+- `app/api.py`: FastAPI. `GET /health`, `POST /ask` (text→answer+citations),
+  `POST /voice` (audio→ASR→RAG→TTS→JSON w/ transcript, answer, citations, base64 MP3).
+  Retriever loaded once at startup (lifespan), shared across requests. CORS for Vite.
+- `app/voice.py`: Deepgram ASR (Nova) + Aura TTS over REST; TTS behind a
+  pluggable `Synthesizer` protocol; clean `VoiceError` handling.
+- Verified: full spoken-question → spoken-answer round-trip works.
 
-**Next up (Day 1 retrieval core), in order:**
-1. `requirements.txt` + config (env vars: `ANTHROPIC_API_KEY`, later `DEEPGRAM_API_KEY`).
-2. PDF parser → chapter-aware extraction.
-3. Chunker → parent-child chunks.
-4. Contextualizer → Claude-generated per-chunk context (prompt caching).
-5. Indexer → Chroma + BM25.
-6. Retriever → hybrid + RRF + rerank.
-7. Headless query script to test retrieval from the terminal.
+**Repo:** https://github.com/yongzhuoyu/pdf-voice-assistant (public). Commits are
+feature-split, no Co-Authored-By trailer.
 
-**Needed from user:** `ANTHROPIC_API_KEY` for steps 4 & 6+; `DEEPGRAM_API_KEY` on Day 2.
+**Build to run the backend:**
+- `cd backend && .venv/bin/python scripts/index.py` (once) builds the index.
+- `.venv/bin/python -m uvicorn app.api:app --port 8000` serves the API.
+
+**Next up (Day 3): React UI** — upload, mic, playback, citation panel. Frontend
+folder is currently empty. Build order: scaffold + text Q&A against /ask first,
+then layer mic + /voice on top.
+
+**Keys:** both `ANTHROPIC_API_KEY` and `DEEPGRAM_API_KEY` are in `backend/.env`
+(gitignored) and verified working.
 
 ## Conventions
 
