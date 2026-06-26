@@ -6,6 +6,7 @@ sentence-transformers>=3 # local cross-encoder reranker (no API cost per query)
 
 # --- PDF parsing ---
 pypdf>=5                 # text + per-page extraction (already used to build the test PDF)
+pdfplumber>=0.11         # per-character font sizes, for font-based chapter detection
 
 # --- Config / plumbing ---
 python-dotenv>=1         # load ANTHROPIC_API_KEY (and later DEEPGRAM_API_KEY) from .env
