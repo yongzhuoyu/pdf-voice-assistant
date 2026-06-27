@@ -44,12 +44,13 @@ export default function App() {
         listDocuments(),
       ]);
       if (cancelled) return;
-      setBackendUp(up || Boolean(d));
+      setBackendUp(up);
       if (d) {
         setDoc(d);
         setActiveId(d.id || null);
       }
       setDocs(list);
+      setLibraryLoaded(true);
     })();
     return () => {
       cancelled = true;
@@ -163,6 +164,11 @@ export default function App() {
   }
 
   const showEmpty = !result && !error && !loading && !recorder.recording;
+  // No book in the library and none indexing: prompt the user to add one.
+  // Keyed on the documents list (the reliable signal), not on /document.
+  const [libraryLoaded, setLibraryLoaded] = useState(false);
+  const noLibrary =
+    backendUp && libraryLoaded && docs.length === 0 && !uploading;
 
   return (
     <div className="app">
@@ -185,6 +191,20 @@ export default function App() {
 
         {uploading && <IndexingBanner uploading={uploading} />}
 
+        {noLibrary && (
+          <section className="empty-library">
+            <h2 className="empty-title">No book loaded yet</h2>
+            <p className="empty-text">
+              Add a PDF to get started — it’ll be indexed so you can ask
+              questions about it by voice or text.
+            </p>
+            <button className="ask-btn" onClick={() => document.getElementById("hidden-upload")?.click()}>
+              + Add a book
+            </button>
+          </section>
+        )}
+
+        {!noLibrary && (
         <section className="ask-area">
           <h2 className="ask-prompt">
             Ask a question{doc?.title ? <> about <em>{doc.title}</em></> : ""}.
@@ -226,12 +246,13 @@ export default function App() {
           )}
           {status && !recorder.recording && <p className="status-line">{status}</p>}
         </section>
+        )}
 
         {(error || recorder.error) && (
           <p className="notice error">{error || recorder.error}</p>
         )}
 
-        {showEmpty && <Examples examples={EXAMPLES} onPick={(q) => ask(q)} />}
+        {!noLibrary && showEmpty && <Examples examples={EXAMPLES} onPick={(q) => ask(q)} />}
 
         {result && (
           <Answer
@@ -298,6 +319,7 @@ function AppHeader({ doc, docs, activeId, backendUp, onSelect, onUpload, uploadi
           {uploading ? "Indexing…" : "+ Add book"}
         </button>
         <input
+          id="hidden-upload"
           ref={fileRef}
           type="file"
           accept="application/pdf,.pdf"

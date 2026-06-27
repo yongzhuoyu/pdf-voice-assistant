@@ -24,13 +24,13 @@ export async function askVoice(audioBlob, docId) {
   return res.json();
 }
 
-/** Is the backend up and the index loaded? Returns boolean, never throws. */
+/** Is the backend reachable? Returns boolean, never throws. */
 export async function checkHealth() {
   try {
     const res = await fetch(`${BASE}/health`);
     if (!res.ok) return false;
     const data = await res.json();
-    return Boolean(data.index_loaded);
+    return data.status === "ok";
   } catch {
     return false;
   }

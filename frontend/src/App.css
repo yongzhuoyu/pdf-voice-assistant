@@ -119,6 +119,27 @@
   padding: 3rem 2rem 4rem;
 }
 
+/* --- Empty library (no book loaded) --- */
+.empty-library {
+  max-width: 38rem;
+  margin: 4rem auto 0;
+  text-align: center;
+  padding: 3rem 2rem;
+  border: 1px dashed var(--rule);
+  border-radius: var(--radius);
+  background: #FBF9F3;
+}
+.empty-title {
+  font-size: 1.6rem;
+  margin-bottom: 0.75rem;
+}
+.empty-text {
+  color: var(--ink-soft);
+  margin: 0 auto 1.75rem;
+  max-width: 28rem;
+}
+.empty-library .ask-btn { padding: 0.7rem 1.6rem; }
+
 /* --- Ask area --- */
 .ask-area { max-width: 50rem; margin: 0 auto; }
 .ask-prompt {
