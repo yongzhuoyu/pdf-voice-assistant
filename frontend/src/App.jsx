@@ -7,8 +7,9 @@ import { useRecorder } from "./useRecorder";
 import "./App.css";
 
 // "Ask the Book" — a spoken/typed Q&A interface over a loaded document.
-// Structure: a slim app header (identity + status + loaded document), a focused
-// ask area (text + voice), and an answer view with citations as margin notes.
+// Structure: a slim app header (identity + the loaded document), a focused
+// ask area (text + voice), and an answer view with citations shown as a
+// footnote strip beneath each answer.
 
 // Generic fallback if a book has no generated questions yet.
 const FALLBACK_EXAMPLES = [

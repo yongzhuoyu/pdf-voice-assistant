@@ -92,7 +92,7 @@ rewards depth; these are where week-long projects spread thin.
 - `app/indexer.py`: hybrid index — Chroma dense + BM25 over contextualized text.
 - `app/retriever.py`: hybrid search → RRF → cross-encoder rerank → parent expansion.
 - `app/answerer.py`: Opus 4.8 grounded answers with **native citations** → chapter/page.
-- `app/store.py` + `scripts/index.py` (build) + `scripts/ask.py` (headless Q&A).
+- `app/store.py`: JSON persistence for contextualized chunks (per document).
 - `tests/`: 14 passing unit tests (parser + chunker).
 
 **Day 2 COMPLETE — API + voice, verified end-to-end.**
