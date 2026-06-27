@@ -331,24 +331,30 @@
   gap: 0.9rem;
 }
 .margin-note {
-  counter-increment: cite;
   display: grid;
   grid-template-columns: 1.5rem 1fr;
   gap: 0.5rem;
-  align-items: baseline;
+  align-items: start;
 }
-.margin-note::before {
-  content: counter(cite);
+.cite-num {
   font-family: var(--mono);
   font-size: 0.8rem;
   color: var(--accent);
+  line-height: 1.5;
+}
+.cite-body { min-width: 0; }
+.cite-head {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.6rem;
+  align-items: baseline;
 }
 .cite-loc {
   font-family: var(--mono);
   font-size: 0.78rem;
   text-transform: uppercase;
   color: var(--ink);
-  margin-right: 0.5rem;
 }
 .cite-title {
   font-family: var(--mono);
@@ -357,8 +363,7 @@
   color: var(--ink-2);
 }
 .cite-quote {
-  display: block;
-  grid-column: 2;
+  margin: 0.3rem 0 0;
   font-family: var(--body);
   font-style: italic;
   font-size: 0.92rem;

@@ -484,13 +484,18 @@ function Answer({ result, playing, onStop, onReplay, hasAudio }) {
           <ol className="margin-notes">
             {uniqueCitations.map((c, i) => (
               <li key={i} className="margin-note">
-                <span className="cite-loc">
-                  Ch. {c.chapter_number} · pp. {c.start_page}–{c.end_page}
-                </span>
-                <span className="cite-title">{c.chapter_title}</span>
-                {c.quoted_text && (
-                  <span className="cite-quote">“{trim(c.quoted_text)}”</span>
-                )}
+                <span className="cite-num">{i + 1}</span>
+                <div className="cite-body">
+                  <p className="cite-head">
+                    <span className="cite-loc">
+                      Ch. {c.chapter_number} · {pageLabel(c.start_page, c.end_page)}
+                    </span>
+                    <span className="cite-title">{c.chapter_title}</span>
+                  </p>
+                  {c.quoted_text && (
+                    <p className="cite-quote">“{trim(c.quoted_text)}”</p>
+                  )}
+                </div>
               </li>
             ))}
           </ol>
@@ -502,7 +507,17 @@ function Answer({ result, playing, onStop, onReplay, hasAudio }) {
   );
 }
 
-function trim(s, n = 120) {
+// "P. 3" for a single page, "PP. 3–5" for a range.
+function pageLabel(start, end) {
+  return start === end ? `P. ${start}` : `PP. ${start}–${end}`;
+}
+
+// Show the quote in full when it's short; otherwise truncate cleanly at a word
+// boundary (never mid-word) with a tidy ellipsis.
+function trim(s, n = 220) {
   s = s.replace(/\s+/g, " ").trim();
-  return s.length > n ? s.slice(0, n) + "…" : s;
+  if (s.length <= n) return s;
+  const cut = s.slice(0, n);
+  const lastSpace = cut.lastIndexOf(" ");
+  return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut).replace(/[.,;:]$/, "") + "…";
 }
