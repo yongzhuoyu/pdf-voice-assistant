@@ -1,16 +1,29 @@
-# React + Vite
+# Frontend — Ask the Book
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+The React + Vite web client: PDF upload, microphone capture, answer playback, and
+the citation panel. It talks to the FastAPI backend over HTTP (`api.js`) and
+records audio with the browser's `MediaRecorder` (`useRecorder.js`).
 
-Currently, two official plugins are available:
+For the full project — including the backend, architecture, and setup — see the
+[root README](../README.md).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Develop
 
-## React Compiler
+```bash
+npm install
+npm run dev      # start the dev server (needs the backend running on :8000)
+npm run build    # production build
+npm run lint     # oxlint
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The backend must be running for the app to work; see the
+[Quickstart](../README.md#quickstart) in the root README.
 
-## Expanding the Oxlint configuration
+## Structure
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+| File | Responsibility |
+|---|---|
+| `src/App.jsx` | Main component: UI, state, and the ask/answer flow. |
+| `src/api.js` | Fetch client for the backend endpoints. |
+| `src/useRecorder.js` | `MediaRecorder` hook for microphone capture. |
+| `src/App.css` | The "Bold Editorial" theme. |
