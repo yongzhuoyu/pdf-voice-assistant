@@ -352,6 +352,8 @@ function AppHeader({ doc, docs, activeId, onSelect, onUpload, onDelete, uploadin
           </button>
         )}
 
+        {doc && <span className="appbar-divider" aria-hidden="true" />}
+
         <button
           className="upload-btn"
           onClick={() => fileRef.current?.click()}

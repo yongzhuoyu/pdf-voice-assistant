@@ -35,7 +35,12 @@
   letter-spacing: 0.08em;
   color: var(--ink-3);
 }
-.appbar-right { display: flex; align-items: center; gap: 0.75rem; }
+.appbar-right { display: flex; align-items: center; gap: 0.9rem; }
+.appbar-divider {
+  width: 1.5px;
+  height: 20px;
+  background: var(--rule-soft);
+}
 .doc-meta {
   font-family: var(--mono);
   font-size: 0.72rem;
@@ -396,4 +401,14 @@
   .brand-sub, .doc-meta { display: none; }
   .ask { flex-wrap: wrap; }
   .main { padding: 2rem 1rem 3rem; }
+}
+
+/* --- Accessibility: honor reduced-motion preference --- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
