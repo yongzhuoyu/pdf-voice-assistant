@@ -25,13 +25,25 @@ from app import config
 from app.retriever import RetrievedPassage
 
 
+# The model begins every reply with one of these exact tags so we can detect
+# scope deterministically instead of guessing from the prose. We strip the tag
+# before showing/speaking the answer.
+_IN_SCOPE_TAG = "[ANSWERED]"
+_OUT_OF_SCOPE_TAG = "[NOT_IN_BOOK]"
+
 _SYSTEM = (
-    "You answer questions about a book using ONLY the provided source passages. "
-    "Ground every claim in the sources and let the citation system attribute it. "
-    "If the passages do not contain the answer, say plainly that the book does "
-    "not cover it — do not use outside knowledge or guess. Keep answers concise "
-    "and direct; this answer will be read aloud, so avoid markdown, lists, and "
-    "parenthetical citations in the prose."
+    "You answer questions about a book using ONLY the provided source passages.\n"
+    "\n"
+    "Begin your reply with a scope tag on its own, before anything else:\n"
+    f"  - {_IN_SCOPE_TAG} if the passages actually contain the answer.\n"
+    f"  - {_OUT_OF_SCOPE_TAG} if they do not — even if the topic is mentioned in "
+    "passing but the specific answer is absent.\n"
+    "\n"
+    "After the tag, write the answer. Ground every claim in the sources and let "
+    "the citation system attribute it. If out of scope, say plainly that the book "
+    "does not cover it — never use outside knowledge or guess. Keep answers "
+    "concise and direct; this answer will be read aloud, so avoid markdown, "
+    "lists, and parenthetical citations in the prose."
 )
 
 
@@ -99,10 +111,19 @@ def generate_answer(question: str, passages: list[RetrievedPassage]) -> Answer:
             ))
 
     answer_text = "".join(text_parts).strip()
-    # Heuristic out-of-scope flag: model said so and cited nothing.
-    oos = not citations and (
-        "does not cover" in answer_text.lower()
-        or "doesn't cover" in answer_text.lower()
-        or "not covered" in answer_text.lower()
-    )
-    return Answer(text=answer_text, citations=citations, out_of_scope=oos)
+
+    # Read the model's explicit scope tag, then strip it from the spoken text.
+    # Default to out-of-scope only if the model explicitly said so; a missing tag
+    # is treated as in-scope (the model answered) to avoid false refusals.
+    out_of_scope = False
+    if answer_text.startswith(_OUT_OF_SCOPE_TAG):
+        out_of_scope = True
+        answer_text = answer_text[len(_OUT_OF_SCOPE_TAG):].lstrip()
+    elif answer_text.startswith(_IN_SCOPE_TAG):
+        answer_text = answer_text[len(_IN_SCOPE_TAG):].lstrip()
+    else:
+        # No tag (model didn't follow format) — fall back to the citation signal:
+        # an answer grounded in real citations is in-scope.
+        out_of_scope = not citations
+
+    return Answer(text=answer_text, citations=citations, out_of_scope=out_of_scope)
