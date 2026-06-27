@@ -36,20 +36,21 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      // A successful document fetch is itself proof the backend is reachable,
-      // so we don't gate everything on a separate health ping that can race.
-      const [up, d, list] = await Promise.all([
-        checkHealth(),
-        getDocument(),
-        listDocuments(),
-      ]);
+      const [up, list] = await Promise.all([checkHealth(), listDocuments()]);
       if (cancelled) return;
       setBackendUp(up);
-      if (d) {
-        setDoc(d);
-        setActiveId(d.id || null);
-      }
       setDocs(list);
+      // Only fetch the active document if the library actually has a ready one —
+      // calling /document on an empty library would 409 (no document yet).
+      const hasReady = list.some((d) => d.status === "ready");
+      if (hasReady) {
+        const d = await getDocument();
+        if (cancelled) return;
+        if (d) {
+          setDoc(d);
+          setActiveId(d.id || null);
+        }
+      }
       setLibraryLoaded(true);
     })();
     return () => {

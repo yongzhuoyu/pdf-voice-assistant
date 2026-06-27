@@ -36,13 +36,14 @@ export async function checkHealth() {
   }
 }
 
-/** Metadata for one document (or the default): { id, title, n_chapters, n_pages }. */
+/** Metadata for one document (or the default): { id, title, n_chapters, n_pages }, or null. */
 export async function getDocument(docId) {
   try {
     const url = docId ? `${BASE}/document?doc_id=${encodeURIComponent(docId)}` : `${BASE}/document`;
     const res = await fetch(url);
     if (!res.ok) return null;
-    return res.json();
+    const data = await res.json();
+    return data && data.id ? data : null;  // {id: null} means no document loaded
   } catch {
     return null;
   }

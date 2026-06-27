@@ -127,14 +127,24 @@ def _to_response(answer: Answer) -> AskResponse:
     )
 
 
-def _resolve_doc_id(doc_id: str | None) -> str:
-    """Use the given doc, or fall back to the most recent ready document."""
-    if doc_id:
-        return doc_id
+def _default_doc_id() -> str | None:
+    """The most recent ready document, or None if the library is empty."""
     for rec in library.list_documents():
         if rec.status == library.STATUS_READY:
             return rec.id
-    raise HTTPException(status_code=409, detail="no document is ready yet")
+    return None
+
+
+def _resolve_doc_id(doc_id: str | None) -> str:
+    """
+    Use the given doc, or fall back to the most recent ready document. Raises if
+    none is available — used by /ask and /voice, where you can't answer without
+    a book.
+    """
+    resolved = doc_id or _default_doc_id()
+    if resolved is None:
+        raise HTTPException(status_code=409, detail="no document is ready yet")
+    return resolved
 
 
 # --- Endpoints ---
@@ -208,11 +218,15 @@ def delete_document(doc_id: str):
 
 @app.get("/document")
 def document(doc_id: str | None = None):
-    doc_id = _resolve_doc_id(doc_id)
-    _, _, info = app.state.cache.get(doc_id)
-    rec = library.get_document(doc_id)
+    # An empty library is a valid state, not an error — return a clean null
+    # document rather than a 409, so the frontend's first load is quiet.
+    resolved = doc_id or _default_doc_id()
+    if resolved is None:
+        return {"id": None}
+    _, _, info = app.state.cache.get(resolved)
+    rec = library.get_document(resolved)
     questions = rec.questions if rec else []
-    return {"id": doc_id, "questions": questions, **info}
+    return {"id": resolved, "questions": questions, **info}
 
 
 @app.post("/ask", response_model=AskResponse)
