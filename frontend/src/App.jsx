@@ -91,7 +91,7 @@ export default function App() {
         await selectDocument(id);
       } else if (rec.status === "failed") {
         setUploading(null);
-        setError(`Indexing failed: ${rec.error || "unknown error"}`);
+        setError(`Couldn’t prepare that book: ${rec.error || "please try another PDF"}`);
       } else {
         setUploading({ id, title: rec.title, progress: rec.progress, stage: rec.stage });
         setTimeout(() => pollIndexing(id), 1500);
@@ -176,7 +176,6 @@ export default function App() {
         doc={doc}
         docs={docs}
         activeId={activeId}
-        backendUp={backendUp}
         onSelect={selectDocument}
         onUpload={handleUpload}
         uploading={uploading}
@@ -195,8 +194,8 @@ export default function App() {
           <section className="empty-library">
             <h2 className="empty-title">No book loaded yet</h2>
             <p className="empty-text">
-              Add a PDF to get started — it’ll be indexed so you can ask
-              questions about it by voice or text.
+              Add a PDF to get started, then ask questions about it by voice
+              or text and hear the answers read back.
             </p>
             <button className="ask-btn" onClick={() => document.getElementById("hidden-upload")?.click()}>
               + Add a book
@@ -270,7 +269,7 @@ export default function App() {
   );
 }
 
-function AppHeader({ doc, docs, activeId, backendUp, onSelect, onUpload, uploading }) {
+function AppHeader({ doc, docs, activeId, onSelect, onUpload, uploading }) {
   const fileRef = useRef(null);
 
   function pickFile(e) {
@@ -316,7 +315,7 @@ function AppHeader({ doc, docs, activeId, backendUp, onSelect, onUpload, uploadi
           disabled={Boolean(uploading)}
           title="Add a PDF book"
         >
-          {uploading ? "Indexing…" : "+ Add book"}
+          {uploading ? "Preparing…" : "+ Add book"}
         </button>
         <input
           id="hidden-upload"
@@ -326,9 +325,6 @@ function AppHeader({ doc, docs, activeId, backendUp, onSelect, onUpload, uploadi
           hidden
           onChange={pickFile}
         />
-
-        <span className={`statusdot ${backendUp ? "ok" : "down"}`} />
-        <span className="status-label">{backendUp ? "Ready" : "Offline"}</span>
       </div>
     </header>
   );

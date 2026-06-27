@@ -43,14 +43,6 @@
   padding-right: 0.6rem;
   border-right: 1px solid var(--rule);
 }
-.statusdot {
-  width: 8px; height: 8px; border-radius: 50%;
-  display: inline-block;
-}
-.statusdot.ok { background: #5C8A56; box-shadow: 0 0 0 3px rgba(92, 138, 86, 0.15); }
-.statusdot.down { background: var(--oxblood); }
-.status-label { font-size: 0.8rem; color: var(--ink-soft); }
-
 /* Document picker + upload */
 .doc-select {
   font-family: var(--serif-body);

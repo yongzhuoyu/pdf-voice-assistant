@@ -165,18 +165,19 @@ def build_document(doc_id: str, on_progress: Callable[[str, float], None] | None
     rec = get_document(doc_id)
     fallback_title = rec.title if rec else None
 
+    # Stage labels are shown to the user in the progress UI — keep them plain,
+    # no internal jargon (chunks, index, etc.).
     try:
-        progress("Parsing PDF", 0.05)
+        progress("Reading the book", 0.05)
         book = parse_pdf(pdf_path, fallback_title=fallback_title)
 
-        progress("Splitting into chunks", 0.15)
+        progress("Reading the book", 0.15)
         chunked = chunk_book(book)
 
-        progress("Adding context to passages", 0.25)
-        # Contextualize with a progress hook that maps chunk completion to 0.25..0.9.
+        progress("Studying the text", 0.25)
         _contextualize_with_progress(book, chunked, doc_id, progress)
 
-        progress("Building search index", 0.92)
+        progress("Almost ready", 0.92)
         save_chunks(chunked, ddir / "chunks.json")
         build_index(chunked, document_id=doc_id)
 
@@ -279,6 +280,6 @@ def _contextualize_with_progress(book, chunked, doc_id, progress) -> None:
     def on_chunk(done: int, total: int):
         if done % 5 == 0 or done == total:
             frac = lo + (hi - lo) * (done / max(total, 1))
-            progress(f"Adding context to passages ({done}/{total})", frac)
+            progress(f"Studying the text ({done}/{total} passages)", frac)
 
     contextualize(book, chunked, progress=False, on_chunk=on_chunk)
