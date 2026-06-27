@@ -113,14 +113,15 @@ class VoiceResponse(AskResponse):
 
 
 def _to_response(answer: Answer) -> AskResponse:
+    # Pages are 0-based internally; present them 1-based to the user (page 0 -> 1).
     return AskResponse(
         answer=answer.text,
         out_of_scope=answer.out_of_scope,
         citations=[
             CitationOut(
                 quoted_text=c.quoted_text, chapter_number=c.chapter_number,
-                chapter_title=c.chapter_title, start_page=c.start_page,
-                end_page=c.end_page,
+                chapter_title=c.chapter_title, start_page=c.start_page + 1,
+                end_page=c.end_page + 1,
             )
             for c in answer.citations
         ],

@@ -66,8 +66,13 @@
   background: var(--paper);
   border: 1.5px solid var(--ink);
   border-radius: 0;
-  padding: 0.3rem 0.5rem;
-  max-width: 14rem;
+  /* Extra right padding leaves room for the native arrow so the title never
+     overlaps it; a long title truncates with an ellipsis. */
+  padding: 0.3rem 1.8rem 0.3rem 0.5rem;
+  max-width: 16rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .upload-btn {
@@ -361,17 +366,20 @@
   gap: 0 0.6rem;
   align-items: baseline;
 }
+/* Chapter title — the meaningful, prominent label */
+.cite-title {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+/* Location — secondary, spelled out ("Chapter I, page 1") */
 .cite-loc {
   font-family: var(--mono);
   font-size: 0.78rem;
-  text-transform: uppercase;
-  color: var(--ink);
-}
-.cite-title {
-  font-family: var(--mono);
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  color: var(--ink-2);
+  color: var(--ink-3);
 }
 .cite-quote {
   margin: 0.3rem 0 0;

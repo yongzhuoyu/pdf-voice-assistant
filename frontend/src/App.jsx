@@ -505,10 +505,8 @@ function Answer({ result, playing, onStop, onReplay, hasAudio }) {
                 <span className="cite-num">{i + 1}</span>
                 <div className="cite-body">
                   <p className="cite-head">
-                    <span className="cite-loc">
-                      Ch. {c.chapter_number} · {pageLabel(c.start_page, c.end_page)}
-                    </span>
-                    <span className="cite-title">{c.chapter_title}</span>
+                    <span className="cite-title">{toTitleCase(c.chapter_title)}</span>
+                    <span className="cite-loc">{locationLabel(c)}</span>
                   </p>
                   {c.quoted_text && (
                     <p className="cite-quote">“{trim(c.quoted_text)}”</p>
@@ -525,9 +523,19 @@ function Answer({ result, playing, onStop, onReplay, hasAudio }) {
   );
 }
 
-// "P. 3" for a single page, "PP. 3–5" for a range.
-function pageLabel(start, end) {
-  return start === end ? `P. ${start}` : `PP. ${start}–${end}`;
+// Human-readable source location, spelled out: "Chapter I, page 1" or
+// "Chapter IV, pages 3–5". No cryptic abbreviations.
+function locationLabel(c) {
+  const pages =
+    c.start_page === c.end_page
+      ? `page ${c.start_page}`
+      : `pages ${c.start_page}–${c.end_page}`;
+  return `Chapter ${c.chapter_number}, ${pages}`;
+}
+
+// "THE ROBIN" -> "The Robin"
+function toTitleCase(s) {
+  return s.toLowerCase().replace(/\b\w/g, (m) => m.toUpperCase());
 }
 
 // Show the quote in full when it's short; otherwise truncate cleanly at a word
