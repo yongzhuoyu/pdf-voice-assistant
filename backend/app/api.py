@@ -6,9 +6,10 @@ Design notes:
 - Retrievers are expensive to load (cross-encoder + Chroma collection), so we
   cache one per document and reuse it across requests, loading lazily on first
   use. Think of it like a connection pool, keyed by document.
-- Uploading a book kicks off indexing in a BACKGROUND thread (it takes minutes —
-  one LLM call per chunk). The upload request returns immediately with a document
-  id; the UI polls /documents/{id} for progress.
+- Uploading a book kicks off indexing in a BACKGROUND thread (one LLM call per
+  chunk; quick for a short book, longer for a large one). The upload request
+  returns immediately with a document id; the UI polls /documents/{id} for
+  progress.
 
 Endpoints:
   GET  /health                 — liveness
@@ -23,15 +24,18 @@ Endpoints:
 from __future__ import annotations
 
 import base64
+import hashlib
+import io
 import threading
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from pypdf import PdfReader
 
 from app import config, library, voice
-from app.retriever import Retriever
+from app.retriever import Retriever, get_reranker
 from app.answerer import generate_answer, Answer
 
 
@@ -67,7 +71,6 @@ async def lifespan(app: FastAPI):
     # Warm the cross-encoder reranker at startup so the first query (or the
     # /document call right after an upload) doesn't block while weights load —
     # that stall looked like the app hanging after an upload.
-    from app.retriever import get_reranker
     get_reranker()
     app.state.cache = RetrieverCache()
     yield
@@ -180,8 +183,6 @@ async def upload_document(file: UploadFile = File(...), title: str | None = Form
         )
 
     # Page-count guard + that it's a readable PDF at all.
-    import io
-    from pypdf import PdfReader
     try:
         n_pages = len(PdfReader(io.BytesIO(pdf_bytes)).pages)
     except Exception:
@@ -194,7 +195,6 @@ async def upload_document(file: UploadFile = File(...), title: str | None = Form
 
     # Duplicate guard: if this exact PDF was already uploaded and is ready,
     # return that document instead of re-indexing the same content.
-    import hashlib
     existing = library.find_by_content_hash(hashlib.sha256(pdf_bytes).hexdigest())
     if existing and existing.status == library.STATUS_READY:
         return {"id": existing.id, "status": existing.status, "duplicate": True}

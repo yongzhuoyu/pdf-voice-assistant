@@ -12,15 +12,18 @@ Layout on disk:
   data/docs/<id>/chunks.json       — contextualized chunks for that document
   (Chroma collection "doc_<id>" holds that document's vectors)
 
-Indexing a book is slow (~minutes; the contextualizer makes one call per chunk),
-so build_document() reports progress through a callback and is meant to run in a
-background thread, not inline with the upload request.
+Indexing makes one contextualization call per chunk (parallelized, so a short
+book finishes in seconds and a large one can take longer), so build_document()
+reports progress through a callback and is meant to run in a background thread,
+not inline with the upload request.
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
+import shutil
 import threading
 import time
 import uuid
@@ -32,8 +35,9 @@ from app import config
 from app.parser import parse_pdf
 from app.chunker import chunk_book
 from app.contextualizer import contextualize
-from app.indexer import build_index
+from app.indexer import build_index, load_index
 from app.store import save_chunks, load_chunks, document_info
+from app.suggestions import generate_starter_questions
 
 DOCS_DIR = config.DATA_DIR / "docs"
 REGISTRY_PATH = DOCS_DIR / "registry.json"
@@ -129,7 +133,6 @@ def delete_document(doc_id: str) -> bool:
     Remove a document: its registry entry, stored files, and Chroma collection.
     Returns True if it existed.
     """
-    import shutil
     with _registry_lock:
         reg = _load_registry()
         if doc_id not in reg:
@@ -154,7 +157,6 @@ def create_document(pdf_bytes: bytes, filename: str, title: str | None = None) -
     Register a new document and save its PDF. Returns the new document id.
     Indexing is started separately (build_document), typically in a thread.
     """
-    import hashlib
     content_hash = hashlib.sha256(pdf_bytes).hexdigest()
 
     doc_id = f"{_slugify(filename)}-{uuid.uuid4().hex[:8]}"
@@ -216,7 +218,6 @@ def build_document(doc_id: str, on_progress: Callable[[str, float], None] | None
         build_index(chunked, document_id=doc_id)
 
         # Tailored starter questions for this book (best-effort; never fatal).
-        from app.suggestions import generate_starter_questions
         questions = generate_starter_questions(book.title, chunked)
 
         info = document_info_for(doc_id, chunked, book.title, book.n_pages)
@@ -256,7 +257,6 @@ def recover_orphaned_jobs() -> None:
 
 def load_document(doc_id: str):
     """Load a ready document's chunks + index for querying."""
-    from app.indexer import load_index
     chunked = load_chunks(_doc_dir(doc_id) / "chunks.json")
     index = load_index(chunked, document_id=doc_id)
     return chunked, index

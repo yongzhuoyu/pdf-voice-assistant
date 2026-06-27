@@ -23,7 +23,7 @@ indexing fast and free.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from app import config
 from app.parser import Chapter, ParsedBook
