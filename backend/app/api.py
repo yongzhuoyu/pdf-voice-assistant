@@ -22,7 +22,7 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from app.store import load_chunks
+from app.store import load_chunks, document_info
 from app.indexer import load_index
 from app.retriever import Retriever
 from app.answerer import generate_answer, Answer
@@ -35,6 +35,7 @@ async def lifespan(app: FastAPI):
     chunked = load_chunks()
     index = load_index(chunked)
     app.state.retriever = Retriever(index, chunked)
+    app.state.chunked = chunked   # kept for /document metadata
     yield
     # nothing to tear down (Chroma is file-backed)
 
@@ -100,6 +101,15 @@ def _to_response(answer: Answer) -> AskResponse:
 def health():
     loaded = getattr(app.state, "retriever", None) is not None
     return {"status": "ok", "index_loaded": loaded}
+
+
+@app.get("/document")
+def document():
+    """Metadata about the currently-loaded book, for the UI's document context."""
+    chunked = getattr(app.state, "chunked", None)
+    if chunked is None:
+        raise HTTPException(status_code=503, detail="index not loaded")
+    return document_info(chunked)
 
 
 @app.post("/ask", response_model=AskResponse)

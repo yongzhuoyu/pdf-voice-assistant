@@ -160,5 +160,5 @@ def parse_pdf(pdf_path: str | Path) -> ParsedBook:
             ch.page_texts.append((pg, pages[pg]))
         ch.text = "\n".join(t for _, t in ch.page_texts)
 
-    return ParsedBook(title="The Adventures of Sherlock Holmes",
-                      chapters=starts, n_pages=n_pages)
+    from app import config
+    return ParsedBook(title=config.BOOK_TITLE, chapters=starts, n_pages=n_pages)

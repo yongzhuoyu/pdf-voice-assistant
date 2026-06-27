@@ -21,6 +21,12 @@ DATA_DIR = BACKEND_DIR / "data"
 TEST_PDF = DATA_DIR / "sherlock.pdf"
 CHROMA_DIR = DATA_DIR / "chroma"  # gitignored; created on first index
 
+# --- Document ---
+# Title of the currently-indexed book. One source of truth; the UI reads this
+# via /document so nothing is hard-coded in the frontend. (For multi-book
+# support this would be stored per-document at index time.)
+BOOK_TITLE = "The Adventures of Sherlock Holmes"
+
 # --- Keys ---
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 DEEPGRAM_API_KEY = os.getenv("DEEPGRAM_API_KEY")
