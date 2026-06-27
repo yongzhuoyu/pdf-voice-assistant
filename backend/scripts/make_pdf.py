@@ -25,9 +25,9 @@ from reportlab.platypus import (
     PageBreak,
 )
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data"
-SRC = DATA_DIR / "sherlock.txt"
-OUT = DATA_DIR / "sherlock.pdf"
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+SRC = BACKEND_DIR / "data" / "sherlock.txt"        # Gutenberg source text
+OUT = BACKEND_DIR.parent / "samples" / "sherlock-holmes.pdf"  # rendered fixture
 
 # A chapter heading looks like "I. A SCANDAL IN BOHEMIA" — a roman numeral,
 # a dot, then a TITLE in caps. Bare sub-section markers like "I." (numeral +

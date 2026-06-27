@@ -17,14 +17,18 @@ BACKEND_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BACKEND_DIR / ".env")
 
 # --- Paths ---
+# DATA_DIR is the backend's runtime working directory (vector store, per-document
+# indexes) — all machine-generated and gitignored. Demo/test PDFs live in the
+# top-level samples/ folder, the single place a human adds books from.
 DATA_DIR = BACKEND_DIR / "data"
-TEST_PDF = DATA_DIR / "sherlock.pdf"
+SAMPLES_DIR = BACKEND_DIR.parent / "samples"
+TEST_PDF = SAMPLES_DIR / "sherlock-holmes.pdf"   # the fixture used by tests + index.py
 CHROMA_DIR = DATA_DIR / "chroma"  # gitignored; created on first index
 
 # --- Document ---
-# Title for the bundled test PDF (data/sherlock.pdf), used by the tests and by
-# scripts/index.py. Uploaded books take their own title from the PDF metadata or
-# filename — this default only applies to the bundled fixture.
+# Title for the bundled test PDF (samples/sherlock-holmes.pdf), used by the tests
+# and by scripts/index.py. Uploaded books take their own title from the PDF
+# metadata or filename — this default only applies to the bundled fixture.
 BOOK_TITLE = "The Adventures of Sherlock Holmes"
 
 # Upload limits — guard against a runaway indexing job on an enormous PDF.
