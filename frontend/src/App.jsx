@@ -10,11 +10,11 @@ import "./App.css";
 // Structure: a slim app header (identity + status + loaded document), a focused
 // ask area (text + voice), and an answer view with citations as margin notes.
 
-const EXAMPLES = [
-  "How did Holmes deduce that Watson had been out in the rain?",
-  "What was unusual about the Red-Headed League?",
-  "Why did the King of Bohemia want the photograph back?",
-  "What did Holmes notice about Mary Sutherland’s appearance?",
+// Generic fallback if a book has no generated questions yet.
+const FALLBACK_EXAMPLES = [
+  "What is this book about?",
+  "Summarize the opening.",
+  "What are the main topics?",
 ];
 
 export default function App() {
@@ -251,7 +251,12 @@ export default function App() {
           <p className="notice error">{error || recorder.error}</p>
         )}
 
-        {!noLibrary && showEmpty && <Examples examples={EXAMPLES} onPick={(q) => ask(q)} />}
+        {!noLibrary && showEmpty && (
+          <Examples
+            examples={doc?.questions?.length ? doc.questions : FALLBACK_EXAMPLES}
+            onPick={(q) => ask(q)}
+          />
+        )}
 
         {result && (
           <Answer

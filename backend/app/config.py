@@ -30,6 +30,11 @@ BOOK_TITLE = "The Adventures of Sherlock Holmes"
 MAX_UPLOAD_MB = 50       # reject files larger than this
 MAX_UPLOAD_PAGES = 600   # reject books with more pages than this
 
+# If true, the bundled Sherlock book (data/chunks.json) is auto-registered at
+# startup so the app has a book ready with no upload. If false, the library
+# starts empty and the user adds books via the UI. Override with SEED_ON_START.
+SEED_ON_START = os.getenv("SEED_ON_START", "false").lower() in ("1", "true", "yes")
+
 # --- Keys ---
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 DEEPGRAM_API_KEY = os.getenv("DEEPGRAM_API_KEY")

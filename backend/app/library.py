@@ -59,6 +59,7 @@ class DocumentRecord:
     progress: float = 0.0          # 0..1 during indexing
     stage: str = ""                # human-readable current step
     error: str = ""
+    questions: list = field(default_factory=list)  # per-book starter questions
     created_at: float = field(default_factory=time.time)
 
 
@@ -181,6 +182,10 @@ def build_document(doc_id: str, on_progress: Callable[[str, float], None] | None
         save_chunks(chunked, ddir / "chunks.json")
         build_index(chunked, document_id=doc_id)
 
+        # Tailored starter questions for this book (best-effort; never fatal).
+        from app.suggestions import generate_starter_questions
+        questions = generate_starter_questions(book.title, chunked)
+
         info = document_info_for(doc_id, chunked, book.title, book.n_pages)
         update_record(
             doc_id,
@@ -190,6 +195,7 @@ def build_document(doc_id: str, on_progress: Callable[[str, float], None] | None
             title=book.title,
             n_chapters=info["n_chapters"],
             n_pages=info["n_pages"],
+            questions=questions,
         )
     except Exception as e:  # noqa: BLE001 — surface any indexing failure to the user
         update_record(doc_id, status=STATUS_FAILED, stage="failed", error=str(e))
@@ -231,6 +237,9 @@ def ensure_seed_document() -> None:
     try:
         chunked = load_chunks(legacy_chunks)
         info = document_info(chunked)
+        # Generate starter questions once when seeding (best-effort).
+        from app.suggestions import generate_starter_questions
+        questions = generate_starter_questions(info["title"], chunked)
         reg[SEED_DOC_ID] = DocumentRecord(
             id=SEED_DOC_ID,
             title=info["title"],
@@ -239,6 +248,7 @@ def ensure_seed_document() -> None:
             progress=1.0,
             n_chapters=info["n_chapters"],
             n_pages=info["n_pages"],
+            questions=questions,
             created_at=0.0,  # sorts last (oldest), so uploads appear first
         )
         _save_registry(reg)

@@ -58,10 +58,12 @@ class RetrieverCache:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Fail any indexing jobs orphaned by a previous restart, then register the
-    # bundled Sherlock book so the app has something ready without an upload.
+    # Fail any indexing jobs orphaned by a previous restart.
     library.recover_orphaned_jobs()
-    library.ensure_seed_document()
+    # Optionally pre-load the bundled book so the app has something ready on a
+    # cold start; off by default (library starts empty, user adds books).
+    if config.SEED_ON_START:
+        library.ensure_seed_document()
     app.state.cache = RetrieverCache()
     yield
 
@@ -184,7 +186,9 @@ async def upload_document(file: UploadFile = File(...), title: str | None = Form
 def document(doc_id: str | None = None):
     doc_id = _resolve_doc_id(doc_id)
     _, _, info = app.state.cache.get(doc_id)
-    return {"id": doc_id, **info}
+    rec = library.get_document(doc_id)
+    questions = rec.questions if rec else []
+    return {"id": doc_id, "questions": questions, **info}
 
 
 @app.post("/ask", response_model=AskResponse)
