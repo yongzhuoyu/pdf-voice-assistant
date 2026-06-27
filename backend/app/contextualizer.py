@@ -81,6 +81,7 @@ def contextualize(
     chunked: ChunkedBook,
     *,
     progress: bool = True,
+    on_chunk=None,   # optional callback(done:int, total:int) for progress UIs
 ) -> ChunkedBook:
     """
     Fill in `child.context` for every child chunk, in place. Returns the same
@@ -113,6 +114,8 @@ def contextualize(
             cache_write += usage.cache_creation_input_tokens or 0
             uncached += usage.input_tokens or 0
             done += 1
+            if on_chunk:
+                on_chunk(done, total)
             if progress and (done % 25 == 0 or done == total):
                 print(
                     f"  contextualized {done}/{total}  "

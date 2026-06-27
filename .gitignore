@@ -14,6 +14,7 @@ __pycache__/
 backend/data/chroma/
 backend/data/*.index
 backend/data/chunks.json
+backend/data/docs/        # uploaded books + their indexes (user data)
 backend/storage/
 
 # Node / frontend

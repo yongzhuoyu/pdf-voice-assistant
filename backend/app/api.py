@@ -1,49 +1,71 @@
 """
-FastAPI app — exposes the Day 1 retrieval pipeline over HTTP, and (Day 2) adds
-voice in/out via Deepgram.
+FastAPI app — exposes the retrieval pipeline over HTTP, with voice in/out and
+multi-document (upload-your-own-book) support.
 
-Design note: the retriever loads a cross-encoder reranker and the Chroma index,
-which is slow (~seconds). We do that ONCE at startup via the lifespan handler and
-stash it on app.state, so every request reuses the warm retriever instead of
-re-loading models per call. Think of it like a DB connection pool created at boot.
+Design notes:
+- Retrievers are expensive to load (cross-encoder + Chroma collection), so we
+  cache one per document and reuse it across requests, loading lazily on first
+  use. Think of it like a connection pool, keyed by document.
+- Uploading a book kicks off indexing in a BACKGROUND thread (it takes minutes —
+  one LLM call per chunk). The upload request returns immediately with a document
+  id; the UI polls /documents/{id} for progress.
 
 Endpoints:
-  GET  /health        — liveness + whether the index is loaded
-  POST /ask           — JSON {question} -> grounded answer + citations (text only)
-  POST /voice         — audio file -> ASR -> RAG -> TTS -> spoken answer (Day 2)
+  GET  /health                 — liveness
+  GET  /documents              — list all books + their indexing status
+  POST /documents              — upload a PDF, start background indexing
+  GET  /documents/{id}         — one book's status/progress
+  GET  /document?doc_id=...    — metadata (title, chapters, pages) for a book
+  POST /ask     {question, doc_id?}      — grounded answer + citations (text)
+  POST /voice   (audio, doc_id?)         — spoken question -> spoken answer
 """
 
 from __future__ import annotations
 
 import base64
+import threading
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from app.store import load_chunks, document_info
-from app.indexer import load_index
+from app import config, library, voice
 from app.retriever import Retriever
 from app.answerer import generate_answer, Answer
-from app import voice
+
+
+# --- Retriever cache (one per document, lazy-loaded) ---
+class RetrieverCache:
+    def __init__(self):
+        self._by_doc: dict[str, tuple] = {}   # doc_id -> (Retriever, chunked, info)
+        self._lock = threading.Lock()
+
+    def get(self, doc_id: str):
+        with self._lock:
+            if doc_id in self._by_doc:
+                return self._by_doc[doc_id]
+        rec = library.get_document(doc_id)
+        if not rec or rec.status != library.STATUS_READY:
+            raise HTTPException(status_code=409, detail="document is not ready")
+        chunked, index = library.load_document(doc_id)
+        retriever = Retriever(index, chunked)
+        info = library.document_info_for(doc_id, chunked, rec.title, rec.n_pages)
+        with self._lock:
+            self._by_doc[doc_id] = (retriever, chunked, info)
+        return self._by_doc[doc_id]
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Load the index + retriever once at startup; share across requests."""
-    chunked = load_chunks()
-    index = load_index(chunked)
-    app.state.retriever = Retriever(index, chunked)
-    app.state.chunked = chunked   # kept for /document metadata
+    # Ensure the bundled Sherlock book is registered as a document so the app
+    # has something ready on first run without an upload.
+    library.ensure_seed_document()
+    app.state.cache = RetrieverCache()
     yield
-    # nothing to tear down (Chroma is file-backed)
 
 
 app = FastAPI(title="PDF Voice Assistant", lifespan=lifespan)
-
-# Allow the React dev server (Day 3) to call us from a different origin.
-# Match any localhost port so Vite picking 5173/5174/etc. just works in dev.
 app.add_middleware(
     CORSMiddleware,
     allow_origin_regex=r"http://(localhost|127\.0\.0\.1):\d+",
@@ -55,6 +77,7 @@ app.add_middleware(
 # --- Schemas ---
 class AskRequest(BaseModel):
     question: str
+    doc_id: str | None = None
 
 
 class CitationOut(BaseModel):
@@ -72,10 +95,8 @@ class AskResponse(BaseModel):
 
 
 class VoiceResponse(AskResponse):
-    """Same as AskResponse plus the recognized question and spoken answer."""
-
-    transcript: str            # what the user said (from ASR)
-    audio_base64: str          # MP3 of the answer, base64-encoded
+    transcript: str
+    audio_base64: str
     audio_mime: str = "audio/mpeg"
 
 
@@ -85,10 +106,8 @@ def _to_response(answer: Answer) -> AskResponse:
         out_of_scope=answer.out_of_scope,
         citations=[
             CitationOut(
-                quoted_text=c.quoted_text,
-                chapter_number=c.chapter_number,
-                chapter_title=c.chapter_title,
-                start_page=c.start_page,
+                quoted_text=c.quoted_text, chapter_number=c.chapter_number,
+                chapter_title=c.chapter_title, start_page=c.start_page,
                 end_page=c.end_page,
             )
             for c in answer.citations
@@ -96,20 +115,54 @@ def _to_response(answer: Answer) -> AskResponse:
     )
 
 
+def _resolve_doc_id(doc_id: str | None) -> str:
+    """Use the given doc, or fall back to the most recent ready document."""
+    if doc_id:
+        return doc_id
+    for rec in library.list_documents():
+        if rec.status == library.STATUS_READY:
+            return rec.id
+    raise HTTPException(status_code=409, detail="no document is ready yet")
+
+
 # --- Endpoints ---
 @app.get("/health")
 def health():
-    loaded = getattr(app.state, "retriever", None) is not None
-    return {"status": "ok", "index_loaded": loaded}
+    return {"status": "ok"}
+
+
+@app.get("/documents")
+def documents():
+    return [vars(r) for r in library.list_documents()]
+
+
+@app.get("/documents/{doc_id}")
+def document_status(doc_id: str):
+    rec = library.get_document(doc_id)
+    if not rec:
+        raise HTTPException(status_code=404, detail="document not found")
+    return vars(rec)
+
+
+@app.post("/documents")
+async def upload_document(file: UploadFile = File(...), title: str | None = Form(None)):
+    if not (file.filename or "").lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="please upload a .pdf file")
+    pdf_bytes = await file.read()
+    if not pdf_bytes:
+        raise HTTPException(status_code=400, detail="empty file")
+
+    doc_id = library.create_document(pdf_bytes, file.filename, title=title)
+    # Index in the background so the request returns immediately.
+    threading.Thread(target=library.build_document, args=(doc_id,), daemon=True).start()
+    return {"id": doc_id, "status": library.STATUS_INDEXING}
 
 
 @app.get("/document")
-def document():
-    """Metadata about the currently-loaded book, for the UI's document context."""
-    chunked = getattr(app.state, "chunked", None)
-    if chunked is None:
-        raise HTTPException(status_code=503, detail="index not loaded")
-    return document_info(chunked)
+def document(doc_id: str | None = None):
+    doc_id = _resolve_doc_id(doc_id)
+    _, _, info = app.state.cache.get(doc_id)
+    return {"id": doc_id, **info}
 
 
 @app.post("/ask", response_model=AskResponse)
@@ -117,19 +170,15 @@ def ask(req: AskRequest):
     question = req.question.strip()
     if not question:
         raise HTTPException(status_code=400, detail="question must not be empty")
-    retriever: Retriever = app.state.retriever
+    doc_id = _resolve_doc_id(req.doc_id)
+    retriever, _, _ = app.state.cache.get(doc_id)
     passages = retriever.retrieve(question)
     answer = generate_answer(question, passages)
     return _to_response(answer)
 
 
 @app.post("/voice", response_model=VoiceResponse)
-async def voice_ask(audio: UploadFile = File(...)):
-    """
-    Full voice round-trip: spoken question -> ASR -> RAG -> spoken answer.
-    Returns the transcript, the grounded answer + citations (for the UI panel),
-    and the answer audio as base64 MP3 (for playback).
-    """
+async def voice_ask(audio: UploadFile = File(...), doc_id: str | None = Form(None)):
     audio_bytes = await audio.read()
     if not audio_bytes:
         raise HTTPException(status_code=400, detail="empty audio upload")
@@ -143,7 +192,8 @@ async def voice_ask(audio: UploadFile = File(...)):
         raise HTTPException(status_code=422,
                             detail="could not transcribe audio; please try again")
 
-    retriever: Retriever = app.state.retriever
+    doc_id = _resolve_doc_id(doc_id)
+    retriever, _, _ = app.state.cache.get(doc_id)
     passages = retriever.retrieve(transcript)
     answer = generate_answer(transcript, passages)
 

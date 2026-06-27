@@ -27,7 +27,12 @@ from app import config
 from app.chunker import ChunkedBook, ChildChunk
 from app.contextualizer import embedding_text
 
-_COLLECTION = "sherlock_children"
+_DEFAULT_COLLECTION = "sherlock_children"
+
+
+def _collection_name(document_id: str | None) -> str:
+    """Per-document Chroma collection. The original single book keeps its name."""
+    return _DEFAULT_COLLECTION if document_id is None else f"doc_{document_id}"
 
 
 def _tokenize(text: str) -> list[str]:
@@ -39,8 +44,10 @@ def _tokenize(text: str) -> list[str]:
 class HybridIndex:
     """Holds the dense (Chroma) collection and the in-memory BM25 index."""
 
-    def __init__(self, children: list[ChildChunk]):
+    def __init__(self, children: list[ChildChunk], document_id: str | None = None):
         self.children = children
+        self.document_id = document_id
+        self._collection_name = _collection_name(document_id)
         self.by_id = {c.id: c for c in children}
         # BM25 over the contextualized text, in child order.
         self._bm25_ids = [c.id for c in children]
@@ -56,10 +63,10 @@ class HybridIndex:
         client = self._client()
         # Fresh collection each build so re-indexing is idempotent.
         try:
-            client.delete_collection(_COLLECTION)
+            client.delete_collection(self._collection_name)
         except Exception:
             pass
-        coll = client.create_collection(_COLLECTION, metadata={"hnsw:space": "cosine"})
+        coll = client.create_collection(self._collection_name, metadata={"hnsw:space": "cosine"})
         coll.add(
             ids=[c.id for c in self.children],
             documents=[embedding_text(c) for c in self.children],
@@ -74,7 +81,7 @@ class HybridIndex:
         self._collection = coll
 
     def load_dense(self) -> None:
-        self._collection = self._client().get_collection(_COLLECTION)
+        self._collection = self._client().get_collection(self._collection_name)
 
     # --- queries (used by retriever.py) ---
     def dense_search(self, query: str, k: int) -> list[tuple[str, float]]:
@@ -90,13 +97,13 @@ class HybridIndex:
         return ranked[:k]
 
 
-def build_index(chunked: ChunkedBook) -> HybridIndex:
-    idx = HybridIndex(chunked.children)
+def build_index(chunked: ChunkedBook, document_id: str | None = None) -> HybridIndex:
+    idx = HybridIndex(chunked.children, document_id=document_id)
     idx.build_dense()
     return idx
 
 
-def load_index(chunked: ChunkedBook) -> HybridIndex:
-    idx = HybridIndex(chunked.children)
+def load_index(chunked: ChunkedBook, document_id: str | None = None) -> HybridIndex:
+    idx = HybridIndex(chunked.children, document_id=document_id)
     idx.load_dense()
     return idx

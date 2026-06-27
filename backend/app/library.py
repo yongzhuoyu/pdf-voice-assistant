@@ -1,0 +1,240 @@
+"""
+Document library — multi-book support.
+
+The original design indexed a single hard-coded book. This module lets the app
+hold many books: each uploaded PDF becomes a "document" with its own id, its own
+contextualized-chunk store, and its own Chroma collection. A small JSON registry
+tracks every document and its indexing status.
+
+Layout on disk:
+  data/docs/registry.json          — list of all documents + status
+  data/docs/<id>/source.pdf        — the uploaded PDF
+  data/docs/<id>/chunks.json       — contextualized chunks for that document
+  (Chroma collection "doc_<id>" holds that document's vectors)
+
+Indexing a book is slow (~minutes; the contextualizer makes one call per chunk),
+so build_document() reports progress through a callback and is meant to run in a
+background thread, not inline with the upload request.
+"""
+
+from __future__ import annotations
+
+import json
+import re
+import time
+import uuid
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Callable
+
+from app import config
+from app.parser import parse_pdf
+from app.chunker import chunk_book
+from app.contextualizer import contextualize
+from app.indexer import build_index
+from app.store import save_chunks, load_chunks, document_info
+
+DOCS_DIR = config.DATA_DIR / "docs"
+REGISTRY_PATH = DOCS_DIR / "registry.json"
+
+# The pre-built bundled book (legacy single-doc index) is registered under this
+# id so it appears in the library and is queryable without an upload. It loads
+# from the original data/chunks.json + legacy Chroma collection.
+SEED_DOC_ID = "sherlock"
+
+# Indexing status values.
+STATUS_INDEXING = "indexing"
+STATUS_READY = "ready"
+STATUS_FAILED = "failed"
+
+
+@dataclass
+class DocumentRecord:
+    id: str
+    title: str
+    status: str
+    n_chapters: int = 0
+    n_pages: int = 0
+    progress: float = 0.0          # 0..1 during indexing
+    stage: str = ""                # human-readable current step
+    error: str = ""
+    created_at: float = field(default_factory=time.time)
+
+
+def _slugify(name: str) -> str:
+    base = re.sub(r"[^a-z0-9]+", "-", Path(name).stem.lower()).strip("-")
+    return base or "book"
+
+
+def _doc_dir(doc_id: str) -> Path:
+    return DOCS_DIR / doc_id
+
+
+def _load_registry() -> dict[str, DocumentRecord]:
+    if not REGISTRY_PATH.exists():
+        return {}
+    raw = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
+    return {k: DocumentRecord(**v) for k, v in raw.items()}
+
+
+def _save_registry(reg: dict[str, DocumentRecord]) -> None:
+    DOCS_DIR.mkdir(parents=True, exist_ok=True)
+    serializable = {k: vars(v) for k, v in reg.items()}
+    REGISTRY_PATH.write_text(json.dumps(serializable, indent=2), encoding="utf-8")
+
+
+# --- public API ---
+
+def list_documents() -> list[DocumentRecord]:
+    """All documents, newest first."""
+    reg = _load_registry()
+    return sorted(reg.values(), key=lambda d: d.created_at, reverse=True)
+
+
+def get_document(doc_id: str) -> DocumentRecord | None:
+    return _load_registry().get(doc_id)
+
+
+def update_record(doc_id: str, **changes) -> None:
+    reg = _load_registry()
+    rec = reg.get(doc_id)
+    if not rec:
+        return
+    for k, v in changes.items():
+        setattr(rec, k, v)
+    reg[doc_id] = rec
+    _save_registry(reg)
+
+
+def create_document(pdf_bytes: bytes, filename: str, title: str | None = None) -> str:
+    """
+    Register a new document and save its PDF. Returns the new document id.
+    Indexing is started separately (build_document), typically in a thread.
+    """
+    doc_id = f"{_slugify(filename)}-{uuid.uuid4().hex[:8]}"
+    ddir = _doc_dir(doc_id)
+    ddir.mkdir(parents=True, exist_ok=True)
+    (ddir / "source.pdf").write_bytes(pdf_bytes)
+
+    reg = _load_registry()
+    reg[doc_id] = DocumentRecord(
+        id=doc_id,
+        title=title or Path(filename).stem,
+        status=STATUS_INDEXING,
+        stage="queued",
+    )
+    _save_registry(reg)
+    return doc_id
+
+
+def build_document(doc_id: str, on_progress: Callable[[str, float], None] | None = None) -> None:
+    """
+    Run the full indexing pipeline for a document: parse -> chunk -> contextualize
+    -> index -> persist. Updates the registry with progress and final status.
+    Designed to run in a background thread.
+    """
+    ddir = _doc_dir(doc_id)
+    pdf_path = ddir / "source.pdf"
+
+    def progress(stage: str, frac: float):
+        update_record(doc_id, stage=stage, progress=round(frac, 3))
+        if on_progress:
+            on_progress(stage, frac)
+
+    try:
+        progress("Parsing PDF", 0.05)
+        book = parse_pdf(pdf_path)
+
+        progress("Splitting into chunks", 0.15)
+        chunked = chunk_book(book)
+
+        progress("Adding context to passages", 0.25)
+        # Contextualize with a progress hook that maps chunk completion to 0.25..0.9.
+        _contextualize_with_progress(book, chunked, doc_id, progress)
+
+        progress("Building search index", 0.92)
+        save_chunks(chunked, ddir / "chunks.json")
+        build_index(chunked, document_id=doc_id)
+
+        info = document_info_for(doc_id, chunked, book.title, book.n_pages)
+        update_record(
+            doc_id,
+            status=STATUS_READY,
+            stage="ready",
+            progress=1.0,
+            title=book.title,
+            n_chapters=info["n_chapters"],
+            n_pages=info["n_pages"],
+        )
+    except Exception as e:  # noqa: BLE001 — surface any indexing failure to the user
+        update_record(doc_id, status=STATUS_FAILED, stage="failed", error=str(e))
+
+
+def ensure_seed_document() -> None:
+    """
+    Register the bundled pre-indexed book as a library document on first run, so
+    the app is usable immediately without an upload. It reads the original
+    data/chunks.json and legacy Chroma collection rather than the per-document
+    layout. No-op if already registered or if the bundled index isn't present.
+    """
+    reg = _load_registry()
+    if SEED_DOC_ID in reg:
+        return
+    legacy_chunks = config.DATA_DIR / "chunks.json"
+    if not legacy_chunks.exists():
+        return  # nothing pre-built to seed
+    try:
+        chunked = load_chunks(legacy_chunks)
+        info = document_info(chunked)
+        reg[SEED_DOC_ID] = DocumentRecord(
+            id=SEED_DOC_ID,
+            title=info["title"],
+            status=STATUS_READY,
+            stage="ready",
+            progress=1.0,
+            n_chapters=info["n_chapters"],
+            n_pages=info["n_pages"],
+            created_at=0.0,  # sorts last (oldest), so uploads appear first
+        )
+        _save_registry(reg)
+    except Exception:
+        pass
+
+
+def load_document(doc_id: str):
+    """Load a ready document's chunks + index for querying."""
+    from app.indexer import load_index
+    if doc_id == SEED_DOC_ID:
+        # Legacy layout: original chunks.json + the default Chroma collection.
+        chunked = load_chunks(config.DATA_DIR / "chunks.json")
+        index = load_index(chunked, document_id=None)
+        return chunked, index
+    chunked = load_chunks(_doc_dir(doc_id) / "chunks.json")
+    index = load_index(chunked, document_id=doc_id)
+    return chunked, index
+
+
+def document_info_for(doc_id: str, chunked, title: str, n_pages: int) -> dict:
+    """Document metadata for the /document response (per-document)."""
+    info = document_info(chunked)
+    info["title"] = title
+    info["n_pages"] = n_pages
+    return info
+
+
+# --- internals ---
+
+def _contextualize_with_progress(book, chunked, doc_id, progress) -> None:
+    """
+    Run the contextualizer, mapping per-chunk completion onto the 0.25..0.9
+    progress band so the upload UI shows real, steady movement during the slow
+    step (one API call per chunk). Throttle registry writes to every few chunks.
+    """
+    lo, hi = 0.25, 0.9
+
+    def on_chunk(done: int, total: int):
+        if done % 5 == 0 or done == total:
+            frac = lo + (hi - lo) * (done / max(total, 1))
+            progress(f"Adding context to passages ({done}/{total})", frac)
+
+    contextualize(book, chunked, progress=False, on_chunk=on_chunk)
