@@ -1,153 +1,210 @@
-/* Layout for the Library theme. Centered reading column with a citation margin. */
+/* App shell + layout for the Library theme.
+   A slim top bar gives the product a frame; the main column holds the ask area,
+   examples, and the answer with citations as margin notes. */
 
-.page {
+.app {
   position: relative;
   z-index: 1;
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 4rem 2rem 3rem;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-/* --- Masthead --- */
-.masthead {
-  text-align: center;
-  padding-bottom: 2.5rem;
-  margin-bottom: 2.5rem;
-  border-bottom: 1px solid var(--rule);
-}
-.kicker {
-  font-family: var(--serif-body);
-  font-style: italic;
-  color: var(--oxblood);
-  letter-spacing: 0.02em;
-  margin: 0 0 0.75rem;
-  font-size: 0.95rem;
-}
-.title {
-  font-size: clamp(2.6rem, 6vw, 4rem);
-  line-height: 1.02;
-}
-.subtitle {
-  color: var(--ink-soft);
-  max-width: 34rem;
-  margin: 1rem auto 0;
-  font-size: 1.05rem;
-}
-
-/* --- Ask zone: mic + text form --- */
-.reading { flex: 1; }
-.ask-zone {
+/* --- App bar (the shell) --- */
+.appbar {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
-  margin-bottom: 2.5rem;
+  justify-content: space-between;
+  padding: 0.9rem 1.75rem;
+  border-bottom: 1px solid var(--rule);
+  background: rgba(244, 241, 232, 0.85);
+  backdrop-filter: saturate(1.1) blur(4px);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+.appbar-left { display: flex; align-items: baseline; gap: 0.7rem; }
+.brand {
+  font-family: var(--serif-display);
+  font-weight: 600;
+  font-size: 1.15rem;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.brand-sub {
+  font-style: italic;
+  color: var(--ink-faint);
+  font-size: 0.85rem;
+}
+.appbar-right { display: flex; align-items: center; gap: 0.6rem; }
+.doc-meta {
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+  padding-right: 0.6rem;
+  border-right: 1px solid var(--rule);
+}
+.statusdot {
+  width: 8px; height: 8px; border-radius: 50%;
+  display: inline-block;
+}
+.statusdot.ok { background: #5C8A56; box-shadow: 0 0 0 3px rgba(92, 138, 86, 0.15); }
+.statusdot.down { background: var(--oxblood); }
+.status-label { font-size: 0.8rem; color: var(--ink-soft); }
+
+/* --- Main column --- */
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 3rem 2rem 4rem;
 }
 
-/* Mic button: the hero control. A quiet oxblood disc with a live pulse ring. */
-.mic {
-  position: relative;
-  width: 76px;
-  height: 76px;
-  border-radius: 50%;
-  border: 1px solid var(--oxblood);
-  background: var(--paper-deep);
-  color: var(--oxblood);
-  display: grid;
-  place-items: center;
-  transition: background 0.15s ease, color 0.15s ease;
+/* --- Ask area --- */
+.ask-area { max-width: 50rem; margin: 0 auto; }
+.ask-prompt {
+  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+  line-height: 1.15;
+  text-align: center;
+  margin-bottom: 1.75rem;
 }
-.mic:hover:not(:disabled) { background: var(--oxblood); color: var(--paper); }
-.mic:disabled { opacity: 0.4; cursor: not-allowed; }
-.mic-on { background: var(--oxblood); color: var(--paper); border-color: var(--oxblood); }
-.mic-glyph { font-size: 1.5rem; line-height: 1; z-index: 1; }
-.mic-ring {
-  position: absolute;
-  inset: -8px;
-  border-radius: 50%;
-  border: 1px solid var(--oxblood);
-  opacity: 0;
-  transition: transform 0.08s ease-out;
-}
-.mic-on .mic-ring { opacity: 0.5; }
+.ask-prompt em { color: var(--oxblood); font-style: italic; }
 
 .ask {
   display: flex;
-  gap: 0.75rem;
-  width: 100%;
-  max-width: 46rem;
+  align-items: stretch;
+  gap: 0.6rem;
 }
 .ask-input {
   flex: 1;
   font-family: var(--serif-body);
   font-size: 1.1rem;
   color: var(--ink);
-  background: var(--paper-deep);
+  background: #FBF9F3;
   border: 1px solid var(--rule);
   border-radius: var(--radius);
-  padding: 0.85rem 1.1rem;
+  padding: 0.8rem 1.1rem;
   outline: none;
-  transition: border-color 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
-.ask-input::placeholder { color: var(--ink-faint); font-style: italic; }
-.ask-input:focus { border-color: var(--oxblood); }
-
+.ask-input::placeholder { color: var(--ink-faint); }
+.ask-input:focus {
+  border-color: var(--oxblood);
+  box-shadow: 0 0 0 3px rgba(139, 74, 59, 0.1);
+}
 .ask-btn {
-  font-size: 1.05rem;
+  font-size: 1.02rem;
   color: var(--paper);
   background: var(--oxblood);
   border: 1px solid var(--oxblood);
   border-radius: var(--radius);
-  padding: 0.85rem 1.8rem;
+  padding: 0 1.5rem;
   transition: background 0.15s ease;
 }
 .ask-btn:hover:not(:disabled) { background: var(--oxblood-deep); }
-.ask-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.ask-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Mic: inline square control matching the input height. */
+.mic {
+  position: relative;
+  width: 48px;
+  flex: 0 0 48px;
+  border-radius: var(--radius);
+  border: 1px solid var(--rule);
+  background: #FBF9F3;
+  color: var(--oxblood);
+  display: grid;
+  place-items: center;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.mic:hover:not(:disabled) { border-color: var(--oxblood); background: var(--paper-deep); }
+.mic:disabled { opacity: 0.4; cursor: not-allowed; }
+.mic-on { background: var(--oxblood); color: var(--paper); border-color: var(--oxblood); }
+.mic-svg, .mic-glyph { z-index: 1; }
+.mic-glyph { font-size: 1rem; line-height: 1; }
+.mic-ring {
+  position: absolute;
+  inset: -1px;
+  border-radius: var(--radius);
+  border: 2px solid var(--oxblood);
+  opacity: 0;
+  transition: transform 0.08s ease-out;
+}
+.mic-on .mic-ring { opacity: 0.4; }
+
+.status-line {
+  text-align: center;
+  margin-top: 1rem;
+  color: var(--ink-soft);
+  font-style: italic;
+  font-size: 0.95rem;
+}
+.status-line.live { color: var(--oxblood); }
+
+/* --- Examples (the empty state) --- */
+.examples { max-width: 50rem; margin: 3rem auto 0; }
+.examples-head {
+  font-family: var(--serif-display);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  margin: 0 0 1rem;
+}
+.example-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+.example {
+  width: 100%;
+  text-align: left;
+  font-family: var(--serif-body);
+  font-size: 1rem;
+  color: var(--ink);
+  background: #FBF9F3;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 0.9rem 1.1rem;
+  line-height: 1.4;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.example:hover {
+  border-color: var(--oxblood);
+  background: var(--paper-deep);
+}
+.examples-foot {
+  margin-top: 1.5rem;
+  color: var(--ink-faint);
+  font-size: 0.92rem;
+  font-style: italic;
+}
 
 /* --- Notices --- */
-.hint, .notice {
+.notice {
   text-align: center;
-  color: var(--ink-faint);
-  font-style: italic;
-  max-width: 36rem;
-  margin: 2rem auto;
+  max-width: 40rem;
+  margin: 1.5rem auto;
 }
-.notice.error { color: var(--oxblood-deep); font-style: normal; }
+.notice.error {
+  color: var(--oxblood-deep);
+  border: 1px solid var(--rule);
+  background: var(--paper-deep);
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius);
+}
 
-/* --- Answer: two-column reading + margin --- */
+/* --- Answer: reading column + citation margin --- */
 .answer {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 17rem;
   gap: 2.5rem;
-  max-width: 60rem;
-  margin: 0 auto;
+  margin: 3rem auto 0;
   align-items: start;
 }
-.answer-body p {
-  margin: 0 0 1.1rem;
-  font-size: 1.18rem;
-  line-height: 1.7;
-  color: var(--ink);
-}
-.prose p:first-of-type::first-letter {
-  font-family: var(--serif-display);
-  font-size: 3.1rem;
-  line-height: 0.8;
-  float: left;
-  padding: 0.1rem 0.6rem 0 0;
-  color: var(--oxblood);
-}
-.prose.no-dropcap p:first-of-type::first-letter {
-  font-size: inherit;
-  float: none;
-  padding: 0;
-  color: inherit;
-}
-
-/* What the user said (voice mode) — quiet italic lead-in. */
 .transcript {
   font-style: italic;
   color: var(--ink-soft);
@@ -166,9 +223,34 @@
   color: var(--ink-faint);
   margin-bottom: 0.2rem;
 }
-.notice.status { color: var(--oxblood); font-style: italic; }
+.oos-flag {
+  display: inline-block;
+  font-style: italic;
+  color: var(--oxblood-deep);
+  border: 1px solid var(--rule);
+  background: var(--paper-deep);
+  padding: 0.25rem 0.7rem;
+  border-radius: var(--radius);
+  margin-bottom: 1.2rem;
+}
+.prose p {
+  margin: 0 0 1.1rem;
+  font-size: 1.16rem;
+  line-height: 1.7;
+  color: var(--ink);
+}
+.prose p:first-of-type::first-letter {
+  font-family: var(--serif-display);
+  font-size: 3.1rem;
+  line-height: 0.8;
+  float: left;
+  padding: 0.1rem 0.6rem 0 0;
+  color: var(--oxblood);
+}
+.prose.no-dropcap p:first-of-type::first-letter {
+  font-size: inherit; float: none; padding: 0; color: inherit;
+}
 
-/* Audio playback controls (voice answers) */
 .audio-bar { margin-top: 1.5rem; }
 .audio-btn {
   font-family: var(--serif-body);
@@ -181,23 +263,13 @@
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 .audio-btn:hover { border-color: var(--oxblood); background: var(--paper-deep); }
-.oos-flag {
-  display: inline-block;
-  font-style: italic;
-  color: var(--oxblood-deep);
-  border: 1px solid var(--rule);
-  background: var(--paper-deep);
-  padding: 0.25rem 0.7rem;
-  border-radius: var(--radius);
-  margin-bottom: 1.2rem;
-}
 
 /* --- Margin notes (citations) --- */
 .margin {
   border-left: 1px solid var(--rule);
   padding-left: 1.6rem;
   position: sticky;
-  top: 2rem;
+  top: 5rem;
 }
 .margin-head {
   font-family: var(--serif-display);
@@ -207,48 +279,32 @@
   color: var(--ink-faint);
   margin: 0 0 1rem;
 }
-.margin-notes { list-style: none; margin: 0; padding: 0; counter-reset: note; }
-.margin-note {
-  margin-bottom: 1.4rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
+.margin-notes { list-style: none; margin: 0; padding: 0; }
+.margin-note { margin-bottom: 1.4rem; display: flex; flex-direction: column; gap: 0.2rem; }
 .cite-loc {
   font-family: var(--serif-display);
   font-weight: 600;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   color: var(--oxblood);
 }
 .cite-title { font-size: 0.9rem; color: var(--ink-soft); }
 .cite-quote {
-  font-size: 0.86rem;
+  font-size: 0.85rem;
   font-style: italic;
   color: var(--ink-faint);
   line-height: 1.45;
   margin-top: 0.15rem;
 }
+.margin-empty { font-size: 0.88rem; color: var(--ink-faint); font-style: italic; }
 
-/* --- Colophon --- */
-.colophon {
-  margin-top: 3rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--rule);
-  text-align: center;
-  font-size: 0.85rem;
-  font-style: italic;
-  color: var(--ink-faint);
-}
-
-/* --- Responsive: collapse margin under the answer on narrow screens --- */
+/* --- Responsive --- */
 @media (max-width: 760px) {
   .answer { grid-template-columns: 1fr; gap: 1.5rem; }
   .margin {
-    border-left: none;
-    border-top: 1px solid var(--rule);
-    padding-left: 0;
-    padding-top: 1.5rem;
-    position: static;
+    border-left: none; border-top: 1px solid var(--rule);
+    padding-left: 0; padding-top: 1.5rem; position: static;
   }
-  .ask { flex-direction: column; }
+  .example-list { grid-template-columns: 1fr; }
+  .appbar { padding: 0.75rem 1rem; }
+  .brand-sub, .doc-meta { display: none; }
 }

@@ -35,6 +35,17 @@ export async function checkHealth() {
   }
 }
 
+/** Loaded-document metadata: { title, chapters, n_chapters, n_pages }. null on failure. */
+export async function getDocument() {
+  try {
+    const res = await fetch(`${BASE}/document`);
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
 // --- internals ---
 
 async function postJSON(url, body) {
