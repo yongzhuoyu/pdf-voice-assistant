@@ -19,6 +19,17 @@
   z-index: 5;
 }
 .appbar-left { display: flex; align-items: baseline; gap: 0.7rem; }
+/* Clickable wordmark — looks like text, resets to the ask state on click. */
+.brand-home {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: default;
+  font-family: inherit;
+}
+.brand-home.resettable { cursor: pointer; }
+.brand-home.resettable:hover .brand { color: var(--accent); }
+.brand-home .brand { transition: color 0.12s ease; }
 .brand {
   font-family: var(--display);
   font-weight: 900;

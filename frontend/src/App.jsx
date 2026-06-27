@@ -57,6 +57,15 @@ export default function App() {
     };
   }, []);
 
+  // Return to the fresh ask state (clears the current answer; keeps the book).
+  function resetToHome() {
+    stopAudio();
+    setResult(null);
+    setQuestion("");
+    setError("");
+    setStatus("");
+  }
+
   // Switch the active book.
   async function selectDocument(id) {
     if (id === activeId) return;
@@ -206,6 +215,8 @@ export default function App() {
         onSelect={selectDocument}
         onUpload={handleUpload}
         onDelete={handleDelete}
+        onHome={resetToHome}
+        canReset={Boolean(result || error)}
         uploading={uploading}
       />
 
@@ -302,7 +313,7 @@ export default function App() {
   );
 }
 
-function AppHeader({ doc, docs, activeId, onSelect, onUpload, onDelete, uploading }) {
+function AppHeader({ doc, docs, activeId, onSelect, onUpload, onDelete, onHome, canReset, uploading }) {
   const fileRef = useRef(null);
 
   function pickFile(e) {
@@ -315,10 +326,16 @@ function AppHeader({ doc, docs, activeId, onSelect, onUpload, onDelete, uploadin
 
   return (
     <header className="appbar">
-      <div className="appbar-left">
+      <button
+        type="button"
+        className={`appbar-left brand-home${canReset ? " resettable" : ""}`}
+        onClick={onHome}
+        title={canReset ? "Start a new question" : "Ask the Book"}
+        aria-label="Ask the Book — start a new question"
+      >
         <span className="brand">Ask the Book</span>
         <span className="brand-sub">a spoken reading companion</span>
-      </div>
+      </button>
 
       <div className="appbar-right">
         {readyDocs.length > 1 && (
