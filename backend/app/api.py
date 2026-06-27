@@ -55,11 +55,20 @@ class RetrieverCache:
             self._by_doc[doc_id] = (retriever, chunked, info)
         return self._by_doc[doc_id]
 
+    def evict(self, doc_id: str):
+        with self._lock:
+            self._by_doc.pop(doc_id, None)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Fail any indexing jobs orphaned by a previous restart.
     library.recover_orphaned_jobs()
+    # Warm the cross-encoder reranker at startup so the first query (or the
+    # /document call right after an upload) doesn't block while weights load —
+    # that stall looked like the app hanging after an upload.
+    from app.retriever import get_reranker
+    get_reranker()
     # Optionally pre-load the bundled book so the app has something ready on a
     # cold start; off by default (library starts empty, user adds books).
     if config.SEED_ON_START:
@@ -176,10 +185,25 @@ async def upload_document(file: UploadFile = File(...), title: str | None = Form
             detail=f"PDF has too many pages ({n_pages}; max {config.MAX_UPLOAD_PAGES}).",
         )
 
+    # Duplicate guard: if this exact PDF was already uploaded and is ready,
+    # return that document instead of re-indexing the same content.
+    import hashlib
+    existing = library.find_by_content_hash(hashlib.sha256(pdf_bytes).hexdigest())
+    if existing and existing.status == library.STATUS_READY:
+        return {"id": existing.id, "status": existing.status, "duplicate": True}
+
     doc_id = library.create_document(pdf_bytes, file.filename, title=title)
     # Index in the background so the request returns immediately.
     threading.Thread(target=library.build_document, args=(doc_id,), daemon=True).start()
     return {"id": doc_id, "status": library.STATUS_INDEXING}
+
+
+@app.delete("/documents/{doc_id}")
+def delete_document(doc_id: str):
+    if not library.delete_document(doc_id):
+        raise HTTPException(status_code=404, detail="document not found (or cannot be removed)")
+    app.state.cache.evict(doc_id)
+    return {"deleted": doc_id}
 
 
 @app.get("/document")

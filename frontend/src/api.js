@@ -66,11 +66,17 @@ export async function getDocumentStatus(docId) {
   return res.json();
 }
 
-/** Upload a PDF; returns { id, status }. Indexing runs in the background. */
+/** Upload a PDF; returns { id, status, duplicate? }. Indexing runs in the background. */
 export async function uploadDocument(file) {
   const form = new FormData();
   form.append("file", file, file.name);
   const res = await send(`${BASE}/documents`, { method: "POST", body: form });
+  return res.json();
+}
+
+/** Remove a book from the library. */
+export async function deleteDocument(docId) {
+  const res = await send(`${BASE}/documents/${encodeURIComponent(docId)}`, { method: "DELETE" });
   return res.json();
 }
 

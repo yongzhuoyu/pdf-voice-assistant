@@ -67,6 +67,18 @@
 .upload-btn:hover:not(:disabled) { background: var(--oxblood); color: var(--paper); }
 .upload-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.remove-btn {
+  font-family: var(--serif-body);
+  font-size: 0.82rem;
+  color: var(--ink-faint);
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 0.35rem 0.7rem;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.remove-btn:hover { color: var(--oxblood); border-color: var(--oxblood); }
+
 /* Indexing progress banner */
 .indexing {
   max-width: 50rem;

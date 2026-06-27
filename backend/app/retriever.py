@@ -56,13 +56,29 @@ def _rrf_fuse(
     return [cid for cid, _ in sorted(scores.items(), key=lambda x: x[1], reverse=True)]
 
 
+# The cross-encoder reranker is loaded ONCE and shared across all books. It's a
+# few hundred MB and stateless, so one instance serves every retriever. Loading
+# it per-book (in __init__) made the first query on each book block for seconds
+# while weights loaded — which looked like the app hanging after an upload.
+_RERANKER: CrossEncoder | None = None
+_RERANKER_LOCK = __import__("threading").Lock()
+
+
+def get_reranker() -> CrossEncoder:
+    global _RERANKER
+    if _RERANKER is None:
+        with _RERANKER_LOCK:
+            if _RERANKER is None:
+                _RERANKER = CrossEncoder(config.RERANK_MODEL)
+    return _RERANKER
+
+
 class Retriever:
     def __init__(self, index: HybridIndex, chunked: ChunkedBook):
         self.index = index
         self.chunked = chunked
         self.parents: dict[str, ParentChunk] = {p.id: p for p in chunked.parents}
-        # Cross-encoder reranker (local; downloaded once, then cached).
-        self._reranker = CrossEncoder(config.RERANK_MODEL)
+        self._reranker = get_reranker()  # shared singleton, loaded once
 
     def retrieve(self, query: str, *, top_k: int = config.FINAL_TOP_K) -> list[RetrievedPassage]:
         # 1. Hybrid first-pass.

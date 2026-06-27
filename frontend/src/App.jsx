@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   askText, askVoice, checkHealth, getDocument,
-  listDocuments, getDocumentStatus, uploadDocument,
+  listDocuments, getDocumentStatus, uploadDocument, deleteDocument,
 } from "./api";
 import { useRecorder } from "./useRecorder";
 import "./App.css";
@@ -69,11 +69,38 @@ export default function App() {
     }
   }
 
+  async function handleDelete(id) {
+    if (!window.confirm("Remove this book from the library?")) return;
+    try {
+      await deleteDocument(id);
+      const fresh = await listDocuments();
+      setDocs(fresh);
+      // Switch to another book, or clear if none remain.
+      const next = fresh.find((d) => d.status === "ready");
+      if (next) {
+        await selectDocument(next.id);
+      } else {
+        setDoc(null);
+        setActiveId(null);
+        setResult(null);
+      }
+    } catch (err) {
+      setError(err.message || "Couldn’t remove the book.");
+    }
+  }
+
   // Upload a PDF and poll until it's indexed, then switch to it.
   async function handleUpload(file) {
     setError("");
     try {
-      const { id } = await uploadDocument(file);
+      const { id, status, duplicate } = await uploadDocument(file);
+      if (duplicate || status === "ready") {
+        // Same book already in the library — just switch to it, no re-index.
+        const fresh = await listDocuments();
+        setDocs(fresh);
+        await selectDocument(id);
+        return;
+      }
       setUploading({ id, title: file.name, progress: 0, stage: "queued" });
       pollIndexing(id);
     } catch (err) {
@@ -178,6 +205,7 @@ export default function App() {
         activeId={activeId}
         onSelect={selectDocument}
         onUpload={handleUpload}
+        onDelete={handleDelete}
         uploading={uploading}
       />
 
@@ -274,7 +302,7 @@ export default function App() {
   );
 }
 
-function AppHeader({ doc, docs, activeId, onSelect, onUpload, uploading }) {
+function AppHeader({ doc, docs, activeId, onSelect, onUpload, onDelete, uploading }) {
   const fileRef = useRef(null);
 
   function pickFile(e) {
@@ -312,6 +340,16 @@ function AppHeader({ doc, docs, activeId, onSelect, onUpload, uploading }) {
           <span className="doc-meta">
             {doc.n_chapters} chapters · {doc.n_pages} pages
           </span>
+        )}
+
+        {doc && activeId && (
+          <button
+            className="remove-btn"
+            onClick={() => onDelete(activeId)}
+            title="Remove this book"
+          >
+            Remove
+          </button>
         )}
 
         <button

@@ -60,6 +60,7 @@ class DocumentRecord:
     stage: str = ""                # human-readable current step
     error: str = ""
     questions: list = field(default_factory=list)  # per-book starter questions
+    content_hash: str = ""         # sha256 of the PDF, for duplicate detection
     created_at: float = field(default_factory=time.time)
 
 
@@ -120,11 +121,49 @@ def update_record(doc_id: str, **changes) -> None:
         _save_registry(reg)
 
 
+def find_by_content_hash(content_hash: str) -> DocumentRecord | None:
+    """Return an existing document with the same PDF content, if any."""
+    for rec in _load_registry().values():
+        if rec.content_hash and rec.content_hash == content_hash:
+            return rec
+    return None
+
+
+def delete_document(doc_id: str) -> bool:
+    """
+    Remove a document: its registry entry, stored files, and Chroma collection.
+    Returns True if it existed. The bundled seed book cannot be deleted.
+    """
+    import shutil
+    if doc_id == SEED_DOC_ID:
+        return False
+    with _registry_lock:
+        reg = _load_registry()
+        if doc_id not in reg:
+            return False
+        del reg[doc_id]
+        _save_registry(reg)
+    # Drop the Chroma collection for this document.
+    try:
+        import chromadb
+        client = chromadb.PersistentClient(path=str(config.CHROMA_DIR))
+        client.delete_collection(f"doc_{doc_id}")
+    except Exception:
+        pass
+    ddir = _doc_dir(doc_id)
+    if ddir.exists():
+        shutil.rmtree(ddir, ignore_errors=True)
+    return True
+
+
 def create_document(pdf_bytes: bytes, filename: str, title: str | None = None) -> str:
     """
     Register a new document and save its PDF. Returns the new document id.
     Indexing is started separately (build_document), typically in a thread.
     """
+    import hashlib
+    content_hash = hashlib.sha256(pdf_bytes).hexdigest()
+
     doc_id = f"{_slugify(filename)}-{uuid.uuid4().hex[:8]}"
     ddir = _doc_dir(doc_id)
     ddir.mkdir(parents=True, exist_ok=True)
@@ -141,6 +180,7 @@ def create_document(pdf_bytes: bytes, filename: str, title: str | None = None) -
             title=title or nice_name or "Untitled Document",
             status=STATUS_INDEXING,
             stage="queued",
+            content_hash=content_hash,
         )
         _save_registry(reg)
     return doc_id
