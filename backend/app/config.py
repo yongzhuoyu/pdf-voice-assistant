@@ -37,6 +37,10 @@ ANSWER_MODEL = "claude-opus-4-8"
 # Cheaper/faster model for the per-chunk contextualization step (runs once per
 # chunk at index time, so cost adds up — use a small model + prompt caching).
 CONTEXT_MODEL = "claude-haiku-4-5"
+# How many contextualization calls to run concurrently. The per-chunk calls are
+# independent, so we fan them out to cut indexing time ~15x vs sequential. Tuned
+# below the API rate limit; raise if you have higher limits.
+CONTEXT_CONCURRENCY = 25
 # Local cross-encoder reranker (no per-query API cost).
 RERANK_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 

@@ -91,45 +91,59 @@ def contextualize(
     all its chunks. Prints running cache-hit stats so the savings are visible
     (and so we can prove prompt caching is actually working).
     """
+    import threading
+    from concurrent.futures import ThreadPoolExecutor
+
     client = anthropic.Anthropic(api_key=config.require_anthropic_key())
     chapter_text = {c.index: c.text for c in book.chapters}
     chapter_title = {c.index: c.title for c in book.chapters}
 
-    # Group children by chapter to keep the cache warm.
+    # Group children by chapter. The prompt cache is keyed on the chapter prefix,
+    # so chunks in the same chapter share a cache entry.
     by_chapter: dict[int, list[ChildChunk]] = {}
     for c in chunked.children:
         by_chapter.setdefault(c.chapter_index, []).append(c)
 
     total = len(chunked.children)
-    done = 0
-    cache_read = cache_write = uncached = 0
+    counters = {"done": 0, "cache_read": 0, "cache_write": 0, "uncached": 0}
+    lock = threading.Lock()
 
-    for ch_idx in sorted(by_chapter):
-        for child in by_chapter[ch_idx]:
-            ctx, usage = _context_for_chunk(
-                client, chapter_title[ch_idx], chapter_text[ch_idx], child.text
-            )
-            child.context = ctx
-            cache_read += usage.cache_read_input_tokens or 0
-            cache_write += usage.cache_creation_input_tokens or 0
-            uncached += usage.input_tokens or 0
-            done += 1
-            if on_chunk:
-                on_chunk(done, total)
-            if progress and (done % 25 == 0 or done == total):
-                print(
-                    f"  contextualized {done}/{total}  "
-                    f"(cache_read={cache_read} cache_write={cache_write} "
-                    f"uncached={uncached})"
-                )
+    def run_one(child: ChildChunk):
+        ctx, usage = _context_for_chunk(
+            client, chapter_title[child.chapter_index],
+            chapter_text[child.chapter_index], child.text
+        )
+        child.context = ctx
+        with lock:
+            counters["done"] += 1
+            counters["cache_read"] += usage.cache_read_input_tokens or 0
+            counters["cache_write"] += usage.cache_creation_input_tokens or 0
+            counters["uncached"] += usage.input_tokens or 0
+            done = counters["done"]
+        if on_chunk:
+            on_chunk(done, total)
+        if progress and (done % 25 == 0 or done == total):
+            print(f"  contextualized {done}/{total}  "
+                  f"(cache_read={counters['cache_read']} "
+                  f"cache_write={counters['cache_write']} "
+                  f"uncached={counters['uncached']})")
+
+    # Per chapter: run the FIRST chunk alone to WRITE the chapter into the cache,
+    # then fan the rest out concurrently so they all READ that warm cache. Firing
+    # a chapter's chunks all at once would make them miss the not-yet-written
+    # cache and re-bill the chapter every time.
+    with ThreadPoolExecutor(max_workers=config.CONTEXT_CONCURRENCY) as pool:
+        for ch_idx in sorted(by_chapter):
+            kids = by_chapter[ch_idx]
+            if not kids:
+                continue
+            run_one(kids[0])              # warm the cache (synchronous)
+            if len(kids) > 1:
+                list(pool.map(run_one, kids[1:]))  # parallel reads
 
     if progress:
-        # Without caching we'd have paid ~cache_read tokens at full price too.
-        saved = cache_read
-        print(
-            f"  done. cache reads saved ~{saved} input tokens from full price "
-            f"(~90% cheaper on those)."
-        )
+        print(f"  done. cache reads saved ~{counters['cache_read']} input tokens "
+              f"from full price (~90% cheaper on those).")
     return chunked
 
 
