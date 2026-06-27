@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { askText, askVoice } from "./api";
+import { askText, askVoice, checkHealth } from "./api";
 import { useRecorder } from "./useRecorder";
 import "./App.css";
 
@@ -12,9 +12,16 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");      // transient status line (e.g. "Transcribing…")
   const [error, setError] = useState("");
+  const [backendUp, setBackendUp] = useState(true);
+  const [playing, setPlaying] = useState(false);
 
   const recorder = useRecorder();
   const audioRef = useRef(null);
+
+  // Check the backend on load so we can warn early if it's down.
+  useEffect(() => {
+    checkHealth().then(setBackendUp);
+  }, []);
 
   async function submitText(e) {
     e?.preventDefault();
@@ -65,7 +72,22 @@ export default function App() {
     const url = URL.createObjectURL(new Blob([bytes], { type: mime }));
     if (audioRef.current) {
       audioRef.current.src = url;
-      audioRef.current.play().catch(() => {});
+      audioRef.current.play().then(() => setPlaying(true)).catch(() => {});
+    }
+  }
+
+  function stopAudio() {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setPlaying(false);
+  }
+
+  function replayAudio() {
+    if (audioRef.current?.src) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().then(() => setPlaying(true)).catch(() => {});
     }
   }
 
@@ -83,6 +105,12 @@ export default function App() {
       </header>
 
       <main className="reading">
+        {!backendUp && (
+          <p className="notice error">
+            Can’t reach the server. Start the backend on port 8000, then reload.
+          </p>
+        )}
+
         <div className="ask-zone">
           <MicButton
             recording={recorder.recording}
@@ -117,7 +145,15 @@ export default function App() {
         )}
         {(error || micError) && <p className="notice error">{error || micError}</p>}
 
-        {result && <Answer result={result} />}
+        {result && (
+          <Answer
+            result={result}
+            playing={playing}
+            onStop={stopAudio}
+            onReplay={replayAudio}
+            hasAudio={Boolean(result.audio_base64)}
+          />
+        )}
 
         {!result && !error && !loading && !recorder.recording && (
           <p className="hint">
@@ -127,7 +163,7 @@ export default function App() {
         )}
       </main>
 
-      <audio ref={audioRef} hidden />
+      <audio ref={audioRef} hidden onEnded={() => setPlaying(false)} />
 
       <footer className="colophon">
         Grounded retrieval over the full text — hybrid search, reranking, and
@@ -154,7 +190,7 @@ function MicButton({ recording, level, disabled, onClick }) {
   );
 }
 
-function Answer({ result }) {
+function Answer({ result, playing, onStop, onReplay, hasAudio }) {
   const { answer, out_of_scope, citations, transcript } = result;
 
   const seen = new Set();
@@ -180,6 +216,20 @@ function Answer({ result }) {
             <p key={i}>{para}</p>
           ))}
         </div>
+
+        {hasAudio && (
+          <div className="audio-bar">
+            {playing ? (
+              <button className="audio-btn" onClick={onStop}>
+                ■ Stop
+              </button>
+            ) : (
+              <button className="audio-btn" onClick={onReplay}>
+                ▶ Replay answer
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {uniqueCitations.length > 0 && (
