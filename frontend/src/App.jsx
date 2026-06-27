@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { askText, askVoice, checkHealth, getDocument } from "./api";
+import {
+  askText, askVoice, checkHealth, getDocument,
+  listDocuments, getDocumentStatus, uploadDocument,
+} from "./api";
 import { useRecorder } from "./useRecorder";
 import "./App.css";
 
@@ -21,25 +24,88 @@ export default function App() {
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [backendUp, setBackendUp] = useState(true);
-  const [doc, setDoc] = useState(null);        // { title, chapters, n_chapters, n_pages }
+  const [doc, setDoc] = useState(null);        // active document metadata
+  const [docs, setDocs] = useState([]);        // all documents (library)
+  const [activeId, setActiveId] = useState(null);
+  const [uploading, setUploading] = useState(null); // { id, title, progress, stage } while indexing
   const [playing, setPlaying] = useState(false);
 
   const recorder = useRecorder();
   const audioRef = useRef(null);
 
   useEffect(() => {
-    checkHealth().then((up) => {
-      setBackendUp(up);
-      if (up) getDocument().then(setDoc);
-    });
+    let cancelled = false;
+    (async () => {
+      // A successful document fetch is itself proof the backend is reachable,
+      // so we don't gate everything on a separate health ping that can race.
+      const [up, d, list] = await Promise.all([
+        checkHealth(),
+        getDocument(),
+        listDocuments(),
+      ]);
+      if (cancelled) return;
+      setBackendUp(up || Boolean(d));
+      if (d) {
+        setDoc(d);
+        setActiveId(d.id || null);
+      }
+      setDocs(list);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  // Switch the active book.
+  async function selectDocument(id) {
+    if (id === activeId) return;
+    setResult(null);
+    setError("");
+    const d = await getDocument(id);
+    if (d) {
+      setDoc(d);
+      setActiveId(id);
+    }
+  }
+
+  // Upload a PDF and poll until it's indexed, then switch to it.
+  async function handleUpload(file) {
+    setError("");
+    try {
+      const { id } = await uploadDocument(file);
+      setUploading({ id, title: file.name, progress: 0, stage: "queued" });
+      pollIndexing(id);
+    } catch (err) {
+      setError(err.message || "Upload failed.");
+    }
+  }
+
+  async function pollIndexing(id) {
+    try {
+      const rec = await getDocumentStatus(id);
+      if (rec.status === "ready") {
+        setUploading(null);
+        const fresh = await listDocuments();
+        setDocs(fresh);
+        await selectDocument(id);
+      } else if (rec.status === "failed") {
+        setUploading(null);
+        setError(`Indexing failed: ${rec.error || "unknown error"}`);
+      } else {
+        setUploading({ id, title: rec.title, progress: rec.progress, stage: rec.stage });
+        setTimeout(() => pollIndexing(id), 1500);
+      }
+    } catch {
+      setTimeout(() => pollIndexing(id), 3000);
+    }
+  }
 
   async function ask(q) {
     const query = (q ?? question).trim();
     if (!query || loading) return;
     setQuestion(query);
     await run(async () => {
-      const data = await askText(query);
+      const data = await askText(query, activeId);
       return { ...data, transcript: null, audio_base64: null };
     });
   }
@@ -56,7 +122,7 @@ export default function App() {
     if (!blob) return;
     await run(async () => {
       setStatus("Transcribing and answering…");
-      return askVoice(blob);
+      return askVoice(blob, activeId);
     });
   }
 
@@ -100,7 +166,15 @@ export default function App() {
 
   return (
     <div className="app">
-      <AppHeader doc={doc} backendUp={backendUp} />
+      <AppHeader
+        doc={doc}
+        docs={docs}
+        activeId={activeId}
+        backendUp={backendUp}
+        onSelect={selectDocument}
+        onUpload={handleUpload}
+        uploading={uploading}
+      />
 
       <main className="main">
         {!backendUp && (
@@ -108,6 +182,8 @@ export default function App() {
             Can’t reach the server. Start the backend on port 8000, then reload.
           </p>
         )}
+
+        {uploading && <IndexingBanner uploading={uploading} />}
 
         <section className="ask-area">
           <h2 className="ask-prompt">
@@ -173,23 +249,84 @@ export default function App() {
   );
 }
 
-function AppHeader({ doc, backendUp }) {
+function AppHeader({ doc, docs, activeId, backendUp, onSelect, onUpload, uploading }) {
+  const fileRef = useRef(null);
+
+  function pickFile(e) {
+    const file = e.target.files?.[0];
+    if (file) onUpload(file);
+    e.target.value = ""; // allow re-uploading the same filename
+  }
+
+  const readyDocs = docs.filter((d) => d.status === "ready");
+
   return (
     <header className="appbar">
       <div className="appbar-left">
         <span className="brand">Ask the Book</span>
         <span className="brand-sub">a spoken reading companion</span>
       </div>
+
       <div className="appbar-right">
+        {readyDocs.length > 1 && (
+          <select
+            className="doc-select"
+            value={activeId || ""}
+            onChange={(e) => onSelect(e.target.value)}
+            title="Switch book"
+          >
+            {readyDocs.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.title}
+              </option>
+            ))}
+          </select>
+        )}
+
         {doc && (
           <span className="doc-meta">
             {doc.n_chapters} chapters · {doc.n_pages} pages
           </span>
         )}
+
+        <button
+          className="upload-btn"
+          onClick={() => fileRef.current?.click()}
+          disabled={Boolean(uploading)}
+          title="Add a PDF book"
+        >
+          {uploading ? "Indexing…" : "+ Add book"}
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/pdf,.pdf"
+          hidden
+          onChange={pickFile}
+        />
+
         <span className={`statusdot ${backendUp ? "ok" : "down"}`} />
-        <span className="status-label">{backendUp ? "Index ready" : "Offline"}</span>
+        <span className="status-label">{backendUp ? "Ready" : "Offline"}</span>
       </div>
     </header>
+  );
+}
+
+function IndexingBanner({ uploading }) {
+  const pct = Math.round((uploading.progress || 0) * 100);
+  return (
+    <div className="indexing">
+      <div className="indexing-head">
+        <span className="indexing-title">Preparing “{uploading.title}”</span>
+        <span className="indexing-pct">{pct}%</span>
+      </div>
+      <div className="indexing-bar">
+        <div className="indexing-fill" style={{ width: `${pct}%` }} />
+      </div>
+      <p className="indexing-stage">
+        {uploading.stage} — this can take several minutes for a full-length book.
+      </p>
+    </div>
   );
 }
 
@@ -235,10 +372,6 @@ function Examples({ examples, onPick }) {
           </li>
         ))}
       </ul>
-      <p className="examples-foot">
-        Answers are drawn only from the book. If it isn’t covered, you’ll be told
-        so rather than given a guess.
-      </p>
     </section>
   );
 }

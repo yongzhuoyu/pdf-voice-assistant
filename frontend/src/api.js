@@ -7,8 +7,8 @@ const UNREACHABLE =
   "Can’t reach the server. Make sure the backend is running on port 8000.";
 
 /** Text question -> { answer, out_of_scope, citations }. */
-export async function askText(question) {
-  const res = await postJSON(`${BASE}/ask`, { question });
+export async function askText(question, docId) {
+  const res = await postJSON(`${BASE}/ask`, { question, doc_id: docId || null });
   return res.json();
 }
 
@@ -16,9 +16,10 @@ export async function askText(question) {
  * Spoken question (audio Blob) -> { transcript, answer, out_of_scope,
  * citations, audio_base64, audio_mime }.
  */
-export async function askVoice(audioBlob) {
+export async function askVoice(audioBlob, docId) {
   const form = new FormData();
   form.append("audio", audioBlob, "question.webm");
+  if (docId) form.append("doc_id", docId);
   const res = await send(`${BASE}/voice`, { method: "POST", body: form });
   return res.json();
 }
@@ -35,15 +36,42 @@ export async function checkHealth() {
   }
 }
 
-/** Loaded-document metadata: { title, chapters, n_chapters, n_pages }. null on failure. */
-export async function getDocument() {
+/** Metadata for one document (or the default): { id, title, n_chapters, n_pages }. */
+export async function getDocument(docId) {
   try {
-    const res = await fetch(`${BASE}/document`);
+    const url = docId ? `${BASE}/document?doc_id=${encodeURIComponent(docId)}` : `${BASE}/document`;
+    const res = await fetch(url);
     if (!res.ok) return null;
     return res.json();
   } catch {
     return null;
   }
+}
+
+/** List all books and their indexing status. [] on failure. */
+export async function listDocuments() {
+  try {
+    const res = await fetch(`${BASE}/documents`);
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
+/** One document's status/progress record. */
+export async function getDocumentStatus(docId) {
+  const res = await fetch(`${BASE}/documents/${encodeURIComponent(docId)}`);
+  if (!res.ok) throw new Error("status check failed");
+  return res.json();
+}
+
+/** Upload a PDF; returns { id, status }. Indexing runs in the background. */
+export async function uploadDocument(file) {
+  const form = new FormData();
+  form.append("file", file, file.name);
+  const res = await send(`${BASE}/documents`, { method: "POST", body: form });
+  return res.json();
 }
 
 // --- internals ---

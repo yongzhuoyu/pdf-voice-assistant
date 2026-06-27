@@ -51,6 +51,65 @@
 .statusdot.down { background: var(--oxblood); }
 .status-label { font-size: 0.8rem; color: var(--ink-soft); }
 
+/* Document picker + upload */
+.doc-select {
+  font-family: var(--serif-body);
+  font-size: 0.85rem;
+  color: var(--ink);
+  background: #FBF9F3;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 0.3rem 0.5rem;
+  max-width: 14rem;
+}
+.upload-btn {
+  font-family: var(--serif-body);
+  font-size: 0.85rem;
+  color: var(--oxblood);
+  background: transparent;
+  border: 1px solid var(--oxblood);
+  border-radius: var(--radius);
+  padding: 0.35rem 0.8rem;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.upload-btn:hover:not(:disabled) { background: var(--oxblood); color: var(--paper); }
+.upload-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Indexing progress banner */
+.indexing {
+  max-width: 50rem;
+  margin: 0 auto 2rem;
+  border: 1px solid var(--rule);
+  background: var(--paper-deep);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+}
+.indexing-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.6rem;
+}
+.indexing-title { font-family: var(--serif-display); font-weight: 600; color: var(--ink); }
+.indexing-pct { font-size: 0.9rem; color: var(--oxblood); font-weight: 600; }
+.indexing-bar {
+  height: 6px;
+  background: var(--rule-soft);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.indexing-fill {
+  height: 100%;
+  background: var(--oxblood);
+  transition: width 0.4s ease;
+}
+.indexing-stage {
+  margin: 0.6rem 0 0;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--ink-faint);
+}
+
 /* --- Main column --- */
 .main {
   flex: 1;
