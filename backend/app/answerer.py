@@ -112,18 +112,20 @@ def generate_answer(question: str, passages: list[RetrievedPassage]) -> Answer:
 
     answer_text = "".join(text_parts).strip()
 
-    # Read the model's explicit scope tag, then strip it from the spoken text.
-    # Default to out-of-scope only if the model explicitly said so; a missing tag
-    # is treated as in-scope (the model answered) to avoid false refusals.
-    out_of_scope = False
+    # Strip the model's scope tag from the spoken text.
+    tagged_out_of_scope = False
     if answer_text.startswith(_OUT_OF_SCOPE_TAG):
-        out_of_scope = True
+        tagged_out_of_scope = True
         answer_text = answer_text[len(_OUT_OF_SCOPE_TAG):].lstrip()
     elif answer_text.startswith(_IN_SCOPE_TAG):
         answer_text = answer_text[len(_IN_SCOPE_TAG):].lstrip()
-    else:
-        # No tag (model didn't follow format) — fall back to the citation signal:
-        # an answer grounded in real citations is in-scope.
-        out_of_scope = not citations
+
+    # Only flag out-of-scope when the question is FULLY unanswerable from the
+    # book — i.e. the model cited nothing. If it grounded its answer in real
+    # passages (citations exist), it's in-scope even if it noted a gap ("the
+    # book describes X but doesn't say Y"). This avoids the contradictory
+    # "Not covered" banner sitting above an answer that clearly discusses the
+    # topic, which happens when a book only partially covers a question.
+    out_of_scope = tagged_out_of_scope and not citations
 
     return Answer(text=answer_text, citations=citations, out_of_scope=out_of_scope)

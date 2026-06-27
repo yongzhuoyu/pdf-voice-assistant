@@ -56,6 +56,23 @@ def main():
         ]),
     ])
 
+    # Short stories — each RESOLVES, so generated example questions have clear
+    # in-book answers (don't end mid-scene).
+    make(SAMPLES / "short-tales.pdf", "Three Short Tales", "A. Marlowe", [
+        ("I. THE GREEN DOOR", [
+            "Mr. Aldous Penrose discovered a green door behind the ivy on the east wall of his garden. The door had no handle and no keyhole, only a small brass plate engraved with a crescent moon. For three nights he returned, and on the third the door opened of its own accord.",
+            "Behind the door Penrose found a small walled orchard he had never known existed, its apple trees heavy with fruit even in winter. An old gardener sat beneath them and explained that the orchard belonged to the house's first owner, and had been waiting a hundred years for someone patient enough to be admitted. Penrose tended it for the rest of his life, and the door was never locked to him again.",
+        ]),
+        ("II. THE CLOCKMAKER OF VENN", [
+            "The clockmaker of Venn was famous for building timepieces that ran backward. Travelers came from distant provinces to watch the hands of his great hall clock sweep counter to the sun. He claimed that a clock running backward did not measure lost time but recovered it.",
+            "The mayor of Venn forbade the great clock, fearing the townsfolk would stop working and spend their days remembering. But on the night it was to be dismantled, the whole town gathered before it, and each person recalled one kindness they had forgotten to repay. By morning the debts of the town were settled, and the mayor, ashamed, let the clock stand.",
+        ]),
+        ("III. THE LANTERN TIDE", [
+            "Once a year the harbor of Saltmere filled with floating lanterns, each carrying a written wish. The tide pulled them out past the breakwater toward the open sea. Young Mira wrote her wish on rice paper and folded it into a paper boat shaped like a swan.",
+            "Mira's wish was not for herself but for the lighthouse keeper, who had not smiled since the winter his daughter was lost at sea. Her swan-shaped boat drifted to the foot of the lighthouse and would go no farther. When the keeper lifted it from the water and read the wish, he wept, and then, for the first time in years, he smiled. From that night his lamp burned a little brighter.",
+        ]),
+    ])
+
 
 if __name__ == "__main__":
     main()
