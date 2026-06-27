@@ -38,11 +38,6 @@ from app.store import save_chunks, load_chunks, document_info
 DOCS_DIR = config.DATA_DIR / "docs"
 REGISTRY_PATH = DOCS_DIR / "registry.json"
 
-# The pre-built bundled book (legacy single-doc index) is registered under this
-# id so it appears in the library and is queryable without an upload. It loads
-# from the original data/chunks.json + legacy Chroma collection.
-SEED_DOC_ID = "sherlock"
-
 # Indexing status values.
 STATUS_INDEXING = "indexing"
 STATUS_READY = "ready"
@@ -132,11 +127,9 @@ def find_by_content_hash(content_hash: str) -> DocumentRecord | None:
 def delete_document(doc_id: str) -> bool:
     """
     Remove a document: its registry entry, stored files, and Chroma collection.
-    Returns True if it existed. The bundled seed book cannot be deleted.
+    Returns True if it existed.
     """
     import shutil
-    if doc_id == SEED_DOC_ID:
-        return False
     with _registry_lock:
         reg = _load_registry()
         if doc_id not in reg:
@@ -261,49 +254,9 @@ def recover_orphaned_jobs() -> None:
             _save_registry(reg)
 
 
-def ensure_seed_document() -> None:
-    """
-    Register the bundled pre-indexed book as a library document on first run, so
-    the app is usable immediately without an upload. It reads the original
-    data/chunks.json and legacy Chroma collection rather than the per-document
-    layout. No-op if already registered or if the bundled index isn't present.
-    """
-    reg = _load_registry()
-    if SEED_DOC_ID in reg:
-        return
-    legacy_chunks = config.DATA_DIR / "chunks.json"
-    if not legacy_chunks.exists():
-        return  # nothing pre-built to seed
-    try:
-        chunked = load_chunks(legacy_chunks)
-        info = document_info(chunked)
-        # Generate starter questions once when seeding (best-effort).
-        from app.suggestions import generate_starter_questions
-        questions = generate_starter_questions(info["title"], chunked)
-        reg[SEED_DOC_ID] = DocumentRecord(
-            id=SEED_DOC_ID,
-            title=info["title"],
-            status=STATUS_READY,
-            stage="ready",
-            progress=1.0,
-            n_chapters=info["n_chapters"],
-            n_pages=info["n_pages"],
-            questions=questions,
-            created_at=0.0,  # sorts last (oldest), so uploads appear first
-        )
-        _save_registry(reg)
-    except Exception:
-        pass
-
-
 def load_document(doc_id: str):
     """Load a ready document's chunks + index for querying."""
     from app.indexer import load_index
-    if doc_id == SEED_DOC_ID:
-        # Legacy layout: original chunks.json + the default Chroma collection.
-        chunked = load_chunks(config.DATA_DIR / "chunks.json")
-        index = load_index(chunked, document_id=None)
-        return chunked, index
     chunked = load_chunks(_doc_dir(doc_id) / "chunks.json")
     index = load_index(chunked, document_id=doc_id)
     return chunked, index

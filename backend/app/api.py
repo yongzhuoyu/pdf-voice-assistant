@@ -69,10 +69,6 @@ async def lifespan(app: FastAPI):
     # that stall looked like the app hanging after an upload.
     from app.retriever import get_reranker
     get_reranker()
-    # Optionally pre-load the bundled book so the app has something ready on a
-    # cold start; off by default (library starts empty, user adds books).
-    if config.SEED_ON_START:
-        library.ensure_seed_document()
     app.state.cache = RetrieverCache()
     yield
 

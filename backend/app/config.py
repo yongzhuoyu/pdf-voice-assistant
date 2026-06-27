@@ -22,18 +22,14 @@ TEST_PDF = DATA_DIR / "sherlock.pdf"
 CHROMA_DIR = DATA_DIR / "chroma"  # gitignored; created on first index
 
 # --- Document ---
-# Title of the bundled seed book. The UI reads document titles via /document;
-# uploaded books take their title from the PDF metadata or filename.
+# Title for the bundled test PDF (data/sherlock.pdf), used by the tests and by
+# scripts/index.py. Uploaded books take their own title from the PDF metadata or
+# filename — this default only applies to the bundled fixture.
 BOOK_TITLE = "The Adventures of Sherlock Holmes"
 
 # Upload limits — guard against a runaway indexing job on an enormous PDF.
 MAX_UPLOAD_MB = 50       # reject files larger than this
 MAX_UPLOAD_PAGES = 600   # reject books with more pages than this
-
-# If true, the bundled Sherlock book (data/chunks.json) is auto-registered at
-# startup so the app has a book ready with no upload. If false, the library
-# starts empty and the user adds books via the UI. Override with SEED_ON_START.
-SEED_ON_START = os.getenv("SEED_ON_START", "false").lower() in ("1", "true", "yes")
 
 # --- Keys ---
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
