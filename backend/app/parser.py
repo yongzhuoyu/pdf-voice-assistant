@@ -114,9 +114,33 @@ def _split_number_title(heading: str) -> tuple[str, str] | None:
     return num.strip(), title.strip()
 
 
-def parse_pdf(pdf_path: str | Path) -> ParsedBook:
+def _derive_title(reader: PdfReader, pdf_path: str, fallback_title: str | None) -> str:
+    """
+    Title for an arbitrary book: prefer the PDF's embedded metadata title, then a
+    caller-provided fallback (e.g. the original upload filename), then the file's
+    own stem. No hard-coded book name — must be correct for any uploaded PDF.
+    """
+    try:
+        meta_title = (reader.metadata.title or "").strip() if reader.metadata else ""
+    except Exception:
+        meta_title = ""
+    # Ignore junk placeholder titles some PDF generators insert.
+    if meta_title and meta_title.lower() not in {"(anonymous)", "untitled", "unknown"}:
+        return meta_title
+    if fallback_title:
+        return fallback_title
+    stem = Path(pdf_path).stem.replace("_", " ").replace("-", " ").strip()
+    return stem.title() if stem else "Untitled Document"
+
+
+def parse_pdf(pdf_path: str | Path, *, title: str | None = None,
+              fallback_title: str | None = None) -> ParsedBook:
     """
     Parse the PDF into chapters with page ranges and per-page text.
+
+    `title` hard-overrides the detected title (used for the bundled book).
+    Otherwise the title comes from PDF metadata, then `fallback_title`, then the
+    filename stem.
 
     Pass 1: detect chapter-start pages by finding large-font headings (pdfplumber
             gives per-character font sizes; pypdf does not).
@@ -138,9 +162,9 @@ def parse_pdf(pdf_path: str | Path) -> ParsedBook:
             split = _split_number_title(heading)
             if not split:
                 continue
-            num, title = split
+            num, ch_title = split   # not `title` — that's the book-title parameter
             starts.append(
-                Chapter(number=num, index=len(starts) + 1, title=title, start_page=i)
+                Chapter(number=num, index=len(starts) + 1, title=ch_title, start_page=i)
             )
 
     if not starts:
@@ -160,5 +184,5 @@ def parse_pdf(pdf_path: str | Path) -> ParsedBook:
             ch.page_texts.append((pg, pages[pg]))
         ch.text = "\n".join(t for _, t in ch.page_texts)
 
-    from app import config
-    return ParsedBook(title=config.BOOK_TITLE, chapters=starts, n_pages=n_pages)
+    book_title = title or _derive_title(reader, pdf_path, fallback_title)
+    return ParsedBook(title=book_title, chapters=starts, n_pages=n_pages)

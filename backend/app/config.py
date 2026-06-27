@@ -22,10 +22,13 @@ TEST_PDF = DATA_DIR / "sherlock.pdf"
 CHROMA_DIR = DATA_DIR / "chroma"  # gitignored; created on first index
 
 # --- Document ---
-# Title of the currently-indexed book. One source of truth; the UI reads this
-# via /document so nothing is hard-coded in the frontend. (For multi-book
-# support this would be stored per-document at index time.)
+# Title of the bundled seed book. The UI reads document titles via /document;
+# uploaded books take their title from the PDF metadata or filename.
 BOOK_TITLE = "The Adventures of Sherlock Holmes"
+
+# Upload limits — guard against a runaway indexing job on an enormous PDF.
+MAX_UPLOAD_MB = 50       # reject files larger than this
+MAX_UPLOAD_PAGES = 600   # reject books with more pages than this
 
 # --- Keys ---
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")

@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import re
+import threading
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -70,6 +71,13 @@ def _doc_dir(doc_id: str) -> Path:
     return DOCS_DIR / doc_id
 
 
+# Guards every read-modify-write of the JSON registry. Background indexing
+# threads update progress while the request thread creates/lists documents, so
+# without this a progress write could clobber a just-created record (last writer
+# wins on the whole file). Hold this around load->mutate->save.
+_registry_lock = threading.RLock()
+
+
 def _load_registry() -> dict[str, DocumentRecord]:
     if not REGISTRY_PATH.exists():
         return {}
@@ -80,7 +88,11 @@ def _load_registry() -> dict[str, DocumentRecord]:
 def _save_registry(reg: dict[str, DocumentRecord]) -> None:
     DOCS_DIR.mkdir(parents=True, exist_ok=True)
     serializable = {k: vars(v) for k, v in reg.items()}
-    REGISTRY_PATH.write_text(json.dumps(serializable, indent=2), encoding="utf-8")
+    # Write atomically (temp file + rename) so a crash mid-write can't corrupt
+    # the registry into invalid JSON.
+    tmp = REGISTRY_PATH.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(serializable, indent=2), encoding="utf-8")
+    tmp.replace(REGISTRY_PATH)
 
 
 # --- public API ---
@@ -96,14 +108,15 @@ def get_document(doc_id: str) -> DocumentRecord | None:
 
 
 def update_record(doc_id: str, **changes) -> None:
-    reg = _load_registry()
-    rec = reg.get(doc_id)
-    if not rec:
-        return
-    for k, v in changes.items():
-        setattr(rec, k, v)
-    reg[doc_id] = rec
-    _save_registry(reg)
+    with _registry_lock:
+        reg = _load_registry()
+        rec = reg.get(doc_id)
+        if not rec:
+            return
+        for k, v in changes.items():
+            setattr(rec, k, v)
+        reg[doc_id] = rec
+        _save_registry(reg)
 
 
 def create_document(pdf_bytes: bytes, filename: str, title: str | None = None) -> str:
@@ -116,14 +129,19 @@ def create_document(pdf_bytes: bytes, filename: str, title: str | None = None) -
     ddir.mkdir(parents=True, exist_ok=True)
     (ddir / "source.pdf").write_bytes(pdf_bytes)
 
-    reg = _load_registry()
-    reg[doc_id] = DocumentRecord(
-        id=doc_id,
-        title=title or Path(filename).stem,
-        status=STATUS_INDEXING,
-        stage="queued",
-    )
-    _save_registry(reg)
+    # A readable title from the original filename, used until parsing finds a
+    # better one (PDF metadata). "the_red_room.pdf" -> "The Red Room".
+    nice_name = Path(filename).stem.replace("_", " ").replace("-", " ").strip().title()
+
+    with _registry_lock:
+        reg = _load_registry()
+        reg[doc_id] = DocumentRecord(
+            id=doc_id,
+            title=title or nice_name or "Untitled Document",
+            status=STATUS_INDEXING,
+            stage="queued",
+        )
+        _save_registry(reg)
     return doc_id
 
 
@@ -141,9 +159,15 @@ def build_document(doc_id: str, on_progress: Callable[[str, float], None] | None
         if on_progress:
             on_progress(stage, frac)
 
+    # The PDF was saved as source.pdf, so its filename can't supply a title.
+    # Pass the title captured at upload time (from the original filename) as the
+    # fallback; parse_pdf still prefers the PDF's embedded metadata title if any.
+    rec = get_document(doc_id)
+    fallback_title = rec.title if rec else None
+
     try:
         progress("Parsing PDF", 0.05)
-        book = parse_pdf(pdf_path)
+        book = parse_pdf(pdf_path, fallback_title=fallback_title)
 
         progress("Splitting into chunks", 0.15)
         chunked = chunk_book(book)
@@ -168,6 +192,26 @@ def build_document(doc_id: str, on_progress: Callable[[str, float], None] | None
         )
     except Exception as e:  # noqa: BLE001 — surface any indexing failure to the user
         update_record(doc_id, status=STATUS_FAILED, stage="failed", error=str(e))
+
+
+def recover_orphaned_jobs() -> None:
+    """
+    On startup, mark any document still 'indexing' as failed. Indexing runs in a
+    background thread; if the server restarted mid-index, that thread is gone and
+    the job will never complete or report failure on its own. Without this the UI
+    would poll a stuck 'indexing' document forever.
+    """
+    with _registry_lock:
+        reg = _load_registry()
+        changed = False
+        for rec in reg.values():
+            if rec.status == STATUS_INDEXING:
+                rec.status = STATUS_FAILED
+                rec.stage = "failed"
+                rec.error = "indexing was interrupted by a server restart"
+                changed = True
+        if changed:
+            _save_registry(reg)
 
 
 def ensure_seed_document() -> None:

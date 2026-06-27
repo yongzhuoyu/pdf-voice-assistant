@@ -58,8 +58,9 @@ class RetrieverCache:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Ensure the bundled Sherlock book is registered as a document so the app
-    # has something ready on first run without an upload.
+    # Fail any indexing jobs orphaned by a previous restart, then register the
+    # bundled Sherlock book so the app has something ready without an upload.
+    library.recover_orphaned_jobs()
     library.ensure_seed_document()
     app.state.cache = RetrieverCache()
     yield
@@ -151,6 +152,27 @@ async def upload_document(file: UploadFile = File(...), title: str | None = Form
     pdf_bytes = await file.read()
     if not pdf_bytes:
         raise HTTPException(status_code=400, detail="empty file")
+
+    # Size guard.
+    max_bytes = config.MAX_UPLOAD_MB * 1024 * 1024
+    if len(pdf_bytes) > max_bytes:
+        raise HTTPException(
+            status_code=413,
+            detail=f"PDF is too large (max {config.MAX_UPLOAD_MB} MB).",
+        )
+
+    # Page-count guard + that it's a readable PDF at all.
+    import io
+    from pypdf import PdfReader
+    try:
+        n_pages = len(PdfReader(io.BytesIO(pdf_bytes)).pages)
+    except Exception:
+        raise HTTPException(status_code=400, detail="could not read this PDF.")
+    if n_pages > config.MAX_UPLOAD_PAGES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"PDF has too many pages ({n_pages}; max {config.MAX_UPLOAD_PAGES}).",
+        )
 
     doc_id = library.create_document(pdf_bytes, file.filename, title=title)
     # Index in the background so the request returns immediately.
