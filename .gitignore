@@ -26,6 +26,8 @@ frontend/.vite/
 .DS_Store
 .vscode/
 .idea/
+*.swp
+*.swo
 
 # Claude Code local tooling config (session-specific, not project source)
 .claude/
