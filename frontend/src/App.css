@@ -1,394 +1,399 @@
-/* App shell + layout for the Library theme.
-   A slim top bar gives the product a frame; the main column holds the ask area,
-   examples, and the answer with citations as margin notes. */
+/* Bold Editorial layout. High-contrast, big type, sharp lines, one loud accent. */
 
 .app {
-  position: relative;
-  z-index: 1;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-/* --- App bar (the shell) --- */
+/* --- App bar: a hard black rule under a bold wordmark --- */
 .appbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.9rem 1.75rem;
-  border-bottom: 1px solid var(--rule);
-  background: rgba(244, 241, 232, 0.85);
-  backdrop-filter: saturate(1.1) blur(4px);
+  padding: 1.1rem 2rem;
+  border-bottom: 2px solid var(--ink);
   position: sticky;
   top: 0;
+  background: var(--paper);
   z-index: 5;
 }
 .appbar-left { display: flex; align-items: baseline; gap: 0.7rem; }
 .brand {
-  font-family: var(--serif-display);
-  font-weight: 600;
-  font-size: 1.15rem;
+  font-family: var(--display);
+  font-weight: 900;
+  font-size: 1.4rem;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
   color: var(--ink);
-  letter-spacing: -0.01em;
 }
+.brand::after { content: " \25CF"; color: var(--accent); }  /* accent dot */
 .brand-sub {
-  font-style: italic;
-  color: var(--ink-faint);
-  font-size: 0.85rem;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
 }
-.appbar-right { display: flex; align-items: center; gap: 0.6rem; }
+.appbar-right { display: flex; align-items: center; gap: 0.75rem; }
 .doc-meta {
-  font-size: 0.8rem;
-  color: var(--ink-faint);
-  padding-right: 0.6rem;
-  border-right: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-2);
 }
-/* Document picker + upload */
 .doc-select {
-  font-family: var(--serif-body);
-  font-size: 0.85rem;
+  font-family: var(--mono);
+  font-size: 0.78rem;
   color: var(--ink);
-  background: #FBF9F3;
-  border: 1px solid var(--rule);
-  border-radius: var(--radius);
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 0;
   padding: 0.3rem 0.5rem;
   max-width: 14rem;
 }
+
 .upload-btn {
-  font-family: var(--serif-body);
-  font-size: 0.85rem;
-  color: var(--oxblood);
-  background: transparent;
-  border: 1px solid var(--oxblood);
-  border-radius: var(--radius);
-  padding: 0.35rem 0.8rem;
-  transition: background 0.15s ease, color 0.15s ease;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--paper);
+  background: var(--ink);
+  border: 1.5px solid var(--ink);
+  border-radius: 0;
+  padding: 0.45rem 0.9rem;
+  transition: background 0.12s ease;
 }
-.upload-btn:hover:not(:disabled) { background: var(--oxblood); color: var(--paper); }
-.upload-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
+.upload-btn:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); }
+.upload-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .remove-btn {
-  font-family: var(--serif-body);
-  font-size: 0.82rem;
-  color: var(--ink-faint);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  color: var(--ink-3);
   background: transparent;
-  border: 1px solid var(--rule);
-  border-radius: var(--radius);
-  padding: 0.35rem 0.7rem;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  border: none;
+  border-bottom: 1.5px solid transparent;
+  padding: 0.2rem 0;
 }
-.remove-btn:hover { color: var(--oxblood); border-color: var(--oxblood); }
-
-/* Indexing progress banner */
-.indexing {
-  max-width: 50rem;
-  margin: 0 auto 2rem;
-  border: 1px solid var(--rule);
-  background: var(--paper-deep);
-  border-radius: var(--radius);
-  padding: 1rem 1.25rem;
-}
-.indexing-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 0.6rem;
-}
-.indexing-title { font-family: var(--serif-display); font-weight: 600; color: var(--ink); }
-.indexing-pct { font-size: 0.9rem; color: var(--oxblood); font-weight: 600; }
-.indexing-bar {
-  height: 6px;
-  background: var(--rule-soft);
-  border-radius: 3px;
-  overflow: hidden;
-}
-.indexing-fill {
-  height: 100%;
-  background: var(--oxblood);
-  transition: width 0.4s ease;
-}
-.indexing-stage {
-  margin: 0.6rem 0 0;
-  font-size: 0.85rem;
-  font-style: italic;
-  color: var(--ink-faint);
-}
+.remove-btn:hover { color: var(--accent); border-bottom-color: var(--accent); }
 
 /* --- Main column --- */
 .main {
   flex: 1;
   width: 100%;
-  max-width: 64rem;
+  max-width: 60rem;
   margin: 0 auto;
-  padding: 3rem 2rem 4rem;
+  padding: 3.5rem 2rem 4rem;
 }
 
-/* --- Empty library (no book loaded) --- */
-.empty-library {
-  max-width: 38rem;
-  margin: 4rem auto 0;
-  text-align: center;
-  padding: 3rem 2rem;
-  border: 1px dashed var(--rule);
-  border-radius: var(--radius);
-  background: #FBF9F3;
-}
-.empty-title {
-  font-size: 1.6rem;
-  margin-bottom: 0.75rem;
-}
-.empty-text {
-  color: var(--ink-soft);
-  margin: 0 auto 1.75rem;
-  max-width: 28rem;
-}
-.empty-library .ask-btn { padding: 0.7rem 1.6rem; }
-
-/* --- Ask area --- */
-.ask-area { max-width: 50rem; margin: 0 auto; }
+/* --- Ask area: a huge headline, then the input --- */
+.ask-area { }
 .ask-prompt {
-  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
-  line-height: 1.15;
-  text-align: center;
-  margin-bottom: 1.75rem;
+  font-family: var(--display);
+  font-weight: 900;
+  font-size: clamp(2.2rem, 5.5vw, 4rem);
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  margin-bottom: 2rem;
+  text-transform: uppercase;
 }
-.ask-prompt em { color: var(--oxblood); font-style: italic; }
+.ask-prompt em { color: var(--accent); font-style: normal; }
 
 .ask {
   display: flex;
   align-items: stretch;
-  gap: 0.6rem;
+  gap: 0;
+  border: 2px solid var(--ink);
 }
 .ask-input {
   flex: 1;
-  font-family: var(--serif-body);
-  font-size: 1.1rem;
+  font-family: var(--body);
+  font-size: 1.15rem;
   color: var(--ink);
-  background: #FBF9F3;
-  border: 1px solid var(--rule);
-  border-radius: var(--radius);
-  padding: 0.8rem 1.1rem;
+  background: var(--paper);
+  border: none;
+  padding: 1rem 1.2rem;
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
-.ask-input::placeholder { color: var(--ink-faint); }
-.ask-input:focus {
-  border-color: var(--oxblood);
-  box-shadow: 0 0 0 3px rgba(139, 74, 59, 0.1);
-}
+.ask-input::placeholder { color: var(--ink-3); }
+.ask-input:focus { background: var(--paper-2); }
 .ask-btn {
-  font-size: 1.02rem;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
   color: var(--paper);
-  background: var(--oxblood);
-  border: 1px solid var(--oxblood);
-  border-radius: var(--radius);
-  padding: 0 1.5rem;
-  transition: background 0.15s ease;
+  background: var(--ink);
+  border: none;
+  border-left: 2px solid var(--ink);
+  padding: 0 2rem;
+  transition: background 0.12s ease;
 }
-.ask-btn:hover:not(:disabled) { background: var(--oxblood-deep); }
-.ask-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.ask-btn:hover:not(:disabled) { background: var(--accent); }
+.ask-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* Mic: inline square control matching the input height. */
+/* Mic: a hard square button */
 .mic {
   position: relative;
-  width: 48px;
-  flex: 0 0 48px;
-  border-radius: var(--radius);
-  border: 1px solid var(--rule);
-  background: #FBF9F3;
-  color: var(--oxblood);
+  width: 56px;
+  flex: 0 0 56px;
+  border: none;
+  border-left: 2px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
   display: grid;
   place-items: center;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  border-radius: 0;
+  transition: background 0.12s ease, color 0.12s ease;
 }
-.mic:hover:not(:disabled) { border-color: var(--oxblood); background: var(--paper-deep); }
+.mic:hover:not(:disabled) { background: var(--accent); color: var(--paper); }
 .mic:disabled { opacity: 0.4; cursor: not-allowed; }
-.mic-on { background: var(--oxblood); color: var(--paper); border-color: var(--oxblood); }
+.mic-on { background: var(--accent); color: var(--paper); }
 .mic-svg, .mic-glyph { z-index: 1; }
-.mic-glyph { font-size: 1rem; line-height: 1; }
+.mic-glyph { font-size: 1rem; }
 .mic-ring {
-  position: absolute;
-  inset: -1px;
-  border-radius: var(--radius);
-  border: 2px solid var(--oxblood);
+  position: absolute; inset: 4px;
+  border: 2px solid var(--paper);
   opacity: 0;
   transition: transform 0.08s ease-out;
 }
-.mic-on .mic-ring { opacity: 0.4; }
+.mic-on .mic-ring { opacity: 0.7; }
 
 .status-line {
-  text-align: center;
-  margin-top: 1rem;
-  color: var(--ink-soft);
-  font-style: italic;
-  font-size: 0.95rem;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 1.2rem;
+  color: var(--ink-2);
 }
-.status-line.live { color: var(--oxblood); }
+.status-line.live { color: var(--accent); }
 
-/* --- Examples (the empty state) --- */
-.examples { max-width: 50rem; margin: 3rem auto 0; }
+/* --- Examples: a stacked list with numbered, ruled rows --- */
+.examples { margin-top: 3rem; }
 .examples-head {
-  font-family: var(--serif-display);
+  font-family: var(--mono);
   text-transform: uppercase;
   letter-spacing: 0.12em;
   font-size: 0.72rem;
-  color: var(--ink-faint);
-  margin: 0 0 1rem;
+  color: var(--ink-3);
+  margin: 0 0 0.5rem;
+  border-bottom: 1.5px solid var(--ink);
+  padding-bottom: 0.5rem;
 }
-.example-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-}
+.example-list { list-style: none; margin: 0; padding: 0; counter-reset: ex; }
+.example-list li { counter-increment: ex; border-bottom: 1px solid var(--rule-soft); }
 .example {
   width: 100%;
   text-align: left;
-  font-family: var(--serif-body);
-  font-size: 1rem;
+  font-family: var(--body);
+  font-size: 1.15rem;
   color: var(--ink);
-  background: #FBF9F3;
-  border: 1px solid var(--rule);
-  border-radius: var(--radius);
-  padding: 0.9rem 1.1rem;
-  line-height: 1.4;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  background: transparent;
+  border: none;
+  padding: 1.1rem 0.5rem 1.1rem 3rem;
+  position: relative;
+  transition: background 0.12s ease, color 0.12s ease, padding 0.12s ease;
 }
-.example:hover {
-  border-color: var(--oxblood);
-  background: var(--paper-deep);
+.example::before {
+  content: counter(ex, decimal-leading-zero);
+  position: absolute;
+  left: 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--accent);
+  top: 1.25rem;
 }
-.examples-foot {
-  margin-top: 1.5rem;
-  color: var(--ink-faint);
-  font-size: 0.92rem;
-  font-style: italic;
-}
+.example:hover { background: var(--ink); color: var(--paper); padding-left: 3.5rem; }
+.example:hover::before { color: var(--paper); }
 
 /* --- Notices --- */
 .notice {
-  text-align: center;
-  max-width: 40rem;
-  margin: 1.5rem auto;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  margin: 1.5rem 0;
 }
 .notice.error {
-  color: var(--oxblood-deep);
-  border: 1px solid var(--rule);
-  background: var(--paper-deep);
-  padding: 0.7rem 1rem;
-  border-radius: var(--radius);
+  color: var(--paper);
+  background: var(--accent);
+  padding: 0.8rem 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
-/* --- Answer: reading column + citation margin --- */
-.answer {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 17rem;
-  gap: 2.5rem;
-  margin: 3rem auto 0;
-  align-items: start;
+/* --- Empty library --- */
+.empty-library {
+  margin: 4rem 0;
+  border: 2px solid var(--ink);
+  padding: 3.5rem 2.5rem;
 }
+.empty-title {
+  font-family: var(--display);
+  font-weight: 900;
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+.empty-text {
+  font-family: var(--body);
+  font-size: 1.15rem;
+  color: var(--ink-2);
+  max-width: 34rem;
+  margin: 0 0 2rem;
+}
+.empty-library .ask-btn {
+  border: 2px solid var(--ink);
+  padding: 0.9rem 2rem;
+}
+
+/* --- Answer: a big pull-quote, citations as a footnote strip --- */
+.answer { margin-top: 3rem; }
 .transcript {
-  font-style: italic;
-  color: var(--ink-soft);
-  border-left: 2px solid var(--oxblood);
-  padding-left: 1rem;
-  margin: 0 0 1.5rem;
-  font-size: 1.05rem;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--ink-2);
+  margin: 0 0 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1.5px solid var(--ink);
 }
 .transcript-label {
-  display: block;
-  font-family: var(--serif-display);
-  font-style: normal;
+  display: inline-block;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-size: 0.68rem;
-  color: var(--ink-faint);
-  margin-bottom: 0.2rem;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin-right: 0.6rem;
 }
 .oos-flag {
   display: inline-block;
-  font-style: italic;
-  color: var(--oxblood-deep);
-  border: 1px solid var(--rule);
-  background: var(--paper-deep);
-  padding: 0.25rem 0.7rem;
-  border-radius: var(--radius);
-  margin-bottom: 1.2rem;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--paper);
+  background: var(--ink);
+  padding: 0.3rem 0.7rem;
+  margin-bottom: 1.5rem;
 }
 .prose p {
-  margin: 0 0 1.1rem;
-  font-size: 1.16rem;
-  line-height: 1.7;
+  font-family: var(--body);
+  font-size: clamp(1.3rem, 2.6vw, 1.7rem);
+  line-height: 1.45;
+  margin: 0 0 1.2rem;
   color: var(--ink);
 }
-.prose p:first-of-type::first-letter {
-  font-family: var(--serif-display);
-  font-size: 3.1rem;
-  line-height: 0.8;
-  float: left;
-  padding: 0.1rem 0.6rem 0 0;
-  color: var(--oxblood);
-}
-.prose.no-dropcap p:first-of-type::first-letter {
-  font-size: inherit; float: none; padding: 0; color: inherit;
-}
+/* No drop-cap in this theme — the scale itself is the statement. */
+.prose.no-dropcap p:first-of-type::first-letter { font-size: inherit; }
 
-.audio-bar { margin-top: 1.5rem; }
+.audio-bar { margin-top: 2rem; }
 .audio-btn {
-  font-family: var(--serif-body);
-  font-size: 0.92rem;
-  color: var(--oxblood);
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ink);
   background: transparent;
-  border: 1px solid var(--rule);
-  border-radius: var(--radius);
-  padding: 0.45rem 1rem;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  border: 1.5px solid var(--ink);
+  border-radius: 0;
+  padding: 0.5rem 1.1rem;
+  transition: background 0.12s ease, color 0.12s ease;
 }
-.audio-btn:hover { border-color: var(--oxblood); background: var(--paper-deep); }
+.audio-btn:hover { background: var(--ink); color: var(--paper); }
 
-/* --- Margin notes (citations) --- */
+/* --- Citations: a numbered footnote strip below the answer --- */
 .margin {
-  border-left: 1px solid var(--rule);
-  padding-left: 1.6rem;
-  position: sticky;
-  top: 5rem;
+  margin-top: 2.5rem;
+  border-top: 2px solid var(--ink);
+  padding-top: 1rem;
 }
 .margin-head {
-  font-family: var(--serif-display);
+  font-family: var(--mono);
   text-transform: uppercase;
   letter-spacing: 0.12em;
   font-size: 0.72rem;
-  color: var(--ink-faint);
+  color: var(--ink-3);
   margin: 0 0 1rem;
 }
-.margin-notes { list-style: none; margin: 0; padding: 0; }
-.margin-note { margin-bottom: 1.4rem; display: flex; flex-direction: column; gap: 0.2rem; }
+.margin-notes {
+  list-style: none; margin: 0; padding: 0;
+  counter-reset: cite;
+  display: grid;
+  gap: 0.9rem;
+}
+.margin-note {
+  counter-increment: cite;
+  display: grid;
+  grid-template-columns: 1.5rem 1fr;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+.margin-note::before {
+  content: counter(cite);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--accent);
+}
 .cite-loc {
-  font-family: var(--serif-display);
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--oxblood);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin-right: 0.5rem;
 }
-.cite-title { font-size: 0.9rem; color: var(--ink-soft); }
+.cite-title {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
 .cite-quote {
-  font-size: 0.85rem;
+  display: block;
+  grid-column: 2;
+  font-family: var(--body);
   font-style: italic;
-  color: var(--ink-faint);
-  line-height: 1.45;
-  margin-top: 0.15rem;
+  font-size: 0.92rem;
+  color: var(--ink-3);
+  margin-top: 0.2rem;
 }
-.margin-empty { font-size: 0.88rem; color: var(--ink-faint); font-style: italic; }
+.margin-empty { font-family: var(--mono); font-size: 0.8rem; color: var(--ink-3); }
+
+/* --- Indexing progress --- */
+.indexing {
+  margin: 0 0 2.5rem;
+  border: 2px solid var(--ink);
+  padding: 1.2rem 1.4rem;
+}
+.indexing-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 0.7rem;
+}
+.indexing-title {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+}
+.indexing-pct { font-family: var(--mono); font-size: 0.85rem; color: var(--accent); }
+.indexing-bar { height: 8px; background: var(--rule-soft); }
+.indexing-fill { height: 100%; background: var(--accent); transition: width 0.4s ease; }
+.indexing-stage {
+  margin: 0.7rem 0 0;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ink-3);
+}
 
 /* --- Responsive --- */
-@media (max-width: 760px) {
-  .answer { grid-template-columns: 1fr; gap: 1.5rem; }
-  .margin {
-    border-left: none; border-top: 1px solid var(--rule);
-    padding-left: 0; padding-top: 1.5rem; position: static;
-  }
-  .example-list { grid-template-columns: 1fr; }
-  .appbar { padding: 0.75rem 1rem; }
+@media (max-width: 640px) {
+  .appbar { padding: 0.9rem 1rem; flex-wrap: wrap; gap: 0.5rem; }
   .brand-sub, .doc-meta { display: none; }
+  .ask { flex-wrap: wrap; }
+  .main { padding: 2rem 1rem 3rem; }
 }

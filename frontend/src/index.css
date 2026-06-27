@@ -1,41 +1,39 @@
 /*
-  Design system — "Library" theme executed with enterprise restraint.
+  Design system — "Bold Editorial".
 
-  The look: a quiet reading room. Warm paper background, ink-dark serif text,
-  a single oxblood accent used sparingly, generous whitespace. Citations render
-  like margin notes. No gradients, no glassmorphism, no generic-AI purple.
+  High-contrast, confident, magazine-cover energy. Stark white, near-black text,
+  ONE electric accent used with intent. Big grotesk display type paired with a
+  serif reading body. Asymmetry and scale do the work; no gradients, no
+  decoration, nothing soft. The opposite of a default template.
 
-  All design tokens live here as CSS variables so the whole app stays
-  consistent and is easy to retune.
+  Tokens live here as CSS variables so the whole app stays consistent.
 */
 
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Newsreader:ital,opsz@0,6..72;1,6..72&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800;900&family=Fraunces:opsz,wght@9..144,400;9..144,500&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 :root {
-  /* Palette */
-  --paper:        #F4F1E8;  /* aged-paper background */
-  --paper-deep:   #ECE7D9;  /* slightly darker panels */
-  --ink:          #2B2724;  /* primary text */
-  --ink-soft:     #5C554E;  /* secondary text */
-  --ink-faint:    #8B8378;  /* captions, hints */
-  --oxblood:      #8B4A3B;  /* the one accent */
-  --oxblood-deep: #6F3A2E;  /* accent hover */
-  --rule:         #D8D1C0;  /* hairline borders */
-  --rule-soft:    #E4DECF;
+  /* Palette — stark, high contrast, one loud accent */
+  --paper:     #FFFFFF;  /* white */
+  --paper-2:   #F4F4F2;  /* faint off-white panel */
+  --ink:       #0A0A0A;  /* near-black text */
+  --ink-2:     #44443F;  /* secondary */
+  --ink-3:     #8A8A82;  /* captions */
+  --accent:    #FF4D00;  /* electric orange — the one loud note */
+  --accent-2:  #E63E00;  /* accent hover */
+  --rule:      #0A0A0A;  /* hairlines are black, part of the grid */
+  --rule-soft: #E2E2DD;
 
   /* Type */
-  --serif-display: 'Fraunces', Georgia, 'Times New Roman', serif;
-  --serif-body:    'Newsreader', Georgia, serif;
+  --display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;  /* heavy grotesk */
+  --body:    'Fraunces', Georgia, serif;                       /* serif reading */
+  --mono:    'IBM Plex Mono', ui-monospace, monospace;         /* data/citations */
 
-  /* Spacing rhythm */
-  --pad: 1.5rem;
-  --radius: 4px;
+  --radius: 0px;   /* sharp corners — editorial, not soft */
 
   color-scheme: light;
-  font-family: var(--serif-body);
+  font-family: var(--body);
   color: var(--ink);
   background: var(--paper);
-  font-synthesis: none;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -50,34 +48,18 @@ html, body, #root {
 
 body {
   font-size: 18px;
-  line-height: 1.65;
-}
-
-/* Subtle paper grain — barely-there texture, not skeuomorphic clip-art. */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.025;
-  z-index: 0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  line-height: 1.6;
 }
 
 h1, h2, h3 {
-  font-family: var(--serif-display);
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  color: var(--ink);
+  font-family: var(--display);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 0.98;
   margin: 0;
+  color: var(--ink);
 }
 
-button {
-  font-family: var(--serif-body);
-  cursor: pointer;
-}
+button { font-family: var(--display); cursor: pointer; }
 
-::selection {
-  background: var(--oxblood);
-  color: var(--paper);
-}
+::selection { background: var(--accent); color: var(--paper); }
