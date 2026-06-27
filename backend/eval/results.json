@@ -1,0 +1,245 @@
+{
+  "book": "A Field Guide to the World's Lighthouses",
+  "summary": {
+    "n_in_scope": 10,
+    "n_out_of_scope": 2,
+    "context_recall": 1.0,
+    "answer_correctness": 1.0,
+    "faithfulness": 1.0,
+    "out_of_scope_accuracy": 1.0
+  },
+  "rows": [
+    {
+      "id": "q01",
+      "kind": "in_scope",
+      "question": "Which lighthouse was the first in the world to use a revolving Fresnel lens?",
+      "answer": "The Cordouan lighthouse in France was the first in the world to use a revolving Fresnel lens. It was installed in 1823.",
+      "out_of_scope": false,
+      "retrieved_chapters": [
+        "V",
+        "XII",
+        "III",
+        "X",
+        "XI"
+      ],
+      "n_citations": 1,
+      "context_recall": 1,
+      "correctness": 1,
+      "correctness_reason": "The generated answer correctly identifies Cordouan lighthouse in France with the 1823 installation date, matching the reference.",
+      "faithfulness": 1,
+      "faithfulness_reason": "Both claims—Cordouan being the first to use a revolving Fresnel lens and installation in 1823—are directly supported by passage V."
+    },
+    {
+      "id": "q02",
+      "kind": "in_scope",
+      "question": "Why was Tillamook Rock Light deactivated in 1957?",
+      "answer": "The Tillamook Rock Light was deactivated in 1957 because decades of punishing weather made it too costly to maintain.",
+      "out_of_scope": false,
+      "retrieved_chapters": [
+        "VII",
+        "VIII",
+        "XII",
+        "VI",
+        "IX"
+      ],
+      "n_citations": 1,
+      "context_recall": 1,
+      "correctness": 1,
+      "correctness_reason": "The generated answer matches the reference: decades of punishing weather made it too costly to maintain.",
+      "faithfulness": 1,
+      "faithfulness_reason": "The claim that Tillamook Rock Light was deactivated in 1957 due to costly weather damage is directly supported by passage VII."
+    },
+    {
+      "id": "q03",
+      "kind": "in_scope",
+      "question": "What building technique made the present Eddystone lighthouse strong enough to withstand the heaviest seas?",
+      "answer": "The present Eddystone lighthouse, completed in 1882, achieved its strength through the use of interlocking granite blocks. The fourth and present Eddystone lighthouse was built of interlocking granite blocks, a technique that made it strong enough to withstand the heaviest seas.",
+      "out_of_scope": false,
+      "retrieved_chapters": [
+        "III",
+        "IV",
+        "IX",
+        "XI",
+        "VI"
+      ],
+      "n_citations": 1,
+      "context_recall": 1,
+      "correctness": 1,
+      "correctness_reason": "The generated answer correctly identifies interlocking granite blocks as the technique.",
+      "faithfulness": 1,
+      "faithfulness_reason": "Both claims—1882 completion and interlocking granite blocks for strength—are directly supported by passage III."
+    },
+    {
+      "id": "q04",
+      "kind": "in_scope",
+      "question": "How was the Cape Hatteras lighthouse saved from the eroding shoreline in 1999?",
+      "answer": "In 1999, the Cape Hatteras lighthouse was saved by being physically relocated. Threatened by an eroding shoreline, the entire tower was lifted onto rails and moved nearly nine hundred metres inland over the course of three weeks. This remarkable feat preserved the historic light from the encroaching sea.",
+      "out_of_scope": false,
+      "retrieved_chapters": [
+        "VI",
+        "IX",
+        "IV",
+        "XII",
+        "VIII"
+      ],
+      "n_citations": 2,
+      "context_recall": 1,
+      "correctness": 1,
+      "correctness_reason": "The generated answer conveys the same key facts: lifted onto rails, moved nearly nine hundred metres inland over three weeks.",
+      "faithfulness": 1,
+      "faithfulness_reason": "All claims (1999, eroding shoreline, lifted onto rails, ~900m inland, three weeks) are directly supported by the source passage."
+    },
+    {
+      "id": "q05",
+      "kind": "in_scope",
+      "question": "Which lighthouse is the oldest still in use today, and who built it?",
+      "answer": "The oldest lighthouse still in use today is the Tower of Hercules in north-western Spain. Built by the Romans in the second century, it is the oldest lighthouse still in use today.",
+      "out_of_scope": false,
+      "retrieved_chapters": [
+        "II",
+        "XI",
+        "IV",
+        "V",
+        "VIII"
+      ],
+      "n_citations": 1,
+      "context_recall": 1,
+      "correctness": 1,
+      "correctness_reason": "The generated answer correctly identifies the Tower of Hercules in Spain, built by the Romans in the second century, matching the reference.",
+      "faithfulness": 1,
+      "faithfulness_reason": "Both claims—that the Tower of Hercules is the oldest lighthouse still in use and that it was built by the Romans in the second century—are directly supported by passage II."
+    },
+    {
+      "id": "q06",
+      "kind": "in_scope",
+      "question": "Who designed the original Macquarie lighthouse and what reward did he receive?",
+      "answer": "The original Macquarie lighthouse tower, completed in 1818, was designed by the convict architect Francis Greenway, who was granted his freedom in reward.",
+      "out_of_scope": false,
+      "retrieved_chapters": [
+        "X",
+        "IV",
+        "IX",
+        "III",
+        "II"
+      ],
+      "n_citations": 1,
+      "context_recall": 1,
+      "correctness": 1,
+      "correctness_reason": "The generated answer correctly identifies Francis Greenway as the designer and states he was granted his freedom as reward, matching the reference.",
+      "faithfulness": 1,
+      "faithfulness_reason": "All claims (1818 completion, Francis Greenway as convict architect, freedom as reward) are directly supported by passage X."
+    },
+    {
+      "id": "q07",
+      "kind": "in_scope",
+      "question": "For what period was the Statue of Liberty officially designated a lighthouse?",
+      "answer": "The Statue of Liberty in New York Harbour was officially designated a lighthouse from 1886 to 1902, making it the first in the United States to be lit by electricity. The light proved too weak to be of much use to mariners, and the statue was removed from the lighthouse service after sixteen years.",
+      "out_of_scope": false,
+      "retrieved_chapters": [
+        "XII",
+        "IX",
+        "II",
+        "V",
+        "X"
+      ],
+      "n_citations": 2,
+      "context_recall": 1,
+      "correctness": 1,
+      "correctness_reason": "The generated answer states the period 1886 to 1902, matching the reference.",
+      "faithfulness": 1,
+      "faithfulness_reason": "All claims (1886-1902 designation, first US lighthouse lit by electricity, weak light, removed after sixteen years) are directly supported by passage XII."
+    },
+    {
+      "id": "q08",
+      "kind": "in_scope",
+      "question": "What made the famous 1989 photograph of the La Jument lighthouse possible?",
+      "answer": "The photograph captured a dramatic moment because a keeper stands in the doorway as an enormous wave engulfs the tower behind him. He had come out believing the sound he heard was a rescue helicopter, and stepped back inside just in time.",
+      "out_of_scope": false,
+      "retrieved_chapters": [
+        "IX",
+        "VI",
+        "V",
+        "III",
+        "XII"
+      ],
+      "n_citations": 1,
+      "context_recall": 1,
+      "correctness": 1,
+      "correctness_reason": "The generated answer conveys all key facts: keeper in doorway, wave engulfing tower, belief about rescue helicopter, and stepping back in time.",
+      "faithfulness": 1,
+      "faithfulness_reason": "All claims (keeper in doorway, wave engulfing tower, mistaking sound for rescue helicopter, stepping back inside just in time) are directly supported by passage IX."
+    },
+    {
+      "id": "q09",
+      "kind": "in_scope",
+      "question": "Why did sailors complain about the early Lindesnes light?",
+      "answer": "Sailors complained about the early Lindesnes light because it was a simple open coal fire sheltered behind glass, and it was often indistinguishable from ordinary bonfires on the shore. It was extinguished for a time before a proper tower was eventually built.",
+      "out_of_scope": false,
+      "retrieved_chapters": [
+        "VIII",
+        "IX",
+        "VII",
+        "XII",
+        "VI"
+      ],
+      "n_citations": 1,
+      "context_recall": 1,
+      "correctness": 1,
+      "correctness_reason": "The generated answer conveys the core fact that it was a simple open coal fire often indistinguishable from ordinary bonfires on shore.",
+      "faithfulness": 1,
+      "faithfulness_reason": "All claims—the coal fire behind glass, indistinguishability from bonfires, and temporary extinguishment before a proper tower—are supported by the Lindesnes passage."
+    },
+    {
+      "id": "q10",
+      "kind": "in_scope",
+      "question": "What is unusual about the construction of the Kopu lighthouse?",
+      "answer": "What makes Kõpu unusual is its construction method. Because it predates the techniques of later tower-builders, Kõpu has no internal staircase in its original core; it was raised as a solid masonry pillar, with stairs added only centuries later. Along with this, its great age and unusual square form make it unmistakable.",
+      "out_of_scope": false,
+      "retrieved_chapters": [
+        "XI",
+        "X",
+        "IX",
+        "III",
+        "IV"
+      ],
+      "n_citations": 2,
+      "context_recall": 1,
+      "correctness": 1,
+      "correctness_reason": "The generated answer conveys the core fact that Kõpu was raised as a solid masonry pillar with no internal staircase originally, stairs added centuries later, matching the reference.",
+      "faithfulness": 1,
+      "faithfulness_reason": "All claims (no internal staircase in original core, solid masonry pillar, stairs added centuries later, great age, square form) are directly supported by the Kõpu passage."
+    },
+    {
+      "id": "q11",
+      "kind": "out_of_scope",
+      "question": "How tall is the Burj Khalifa?",
+      "answer": "This book does not cover the Burj Khalifa or its height. The passages provided discuss various lighthouses and their dimensions, but none mention the Burj Khalifa.",
+      "out_of_scope": true,
+      "retrieved_chapters": [
+        "VI",
+        "II",
+        "I",
+        "VII",
+        "XI"
+      ],
+      "n_citations": 0,
+      "refused_correctly": 1
+    },
+    {
+      "id": "q12",
+      "kind": "out_of_scope",
+      "question": "What was the average keeper's salary at the lighthouses described in the book?",
+      "answer": "The book does not cover keepers' salaries. The passages describe various lighthouses and some of their history, but they contain no information about what keepers were paid.",
+      "out_of_scope": true,
+      "retrieved_chapters": [
+        "IX",
+        "XII",
+        "V",
+        "IV",
+        "VIII"
+      ],
+      "n_citations": 0,
+      "refused_correctly": 1
+    }
+  ]
+}

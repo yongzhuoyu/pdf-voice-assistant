@@ -1,0 +1,91 @@
+{
+  "book": "A Field Guide to the World's Lighthouses",
+  "source_pdf": "samples/world-lighthouses.pdf",
+  "notes": "Hand-written question/answer pairs over the bundled 12-chapter sample book. expected_chapter is the chapter (roman numeral) whose passage contains the answer, used to score retrieval context-recall. kind=out_of_scope questions are plausible-sounding but not answerable from the book; they test the grounding/refusal path.",
+  "items": [
+    {
+      "id": "q01",
+      "kind": "in_scope",
+      "question": "Which lighthouse was the first in the world to use a revolving Fresnel lens?",
+      "expected_answer": "The Cordouan lighthouse in France, which had a revolving Fresnel lens installed in 1823.",
+      "expected_chapter": "V"
+    },
+    {
+      "id": "q02",
+      "kind": "in_scope",
+      "question": "Why was Tillamook Rock Light deactivated in 1957?",
+      "expected_answer": "Decades of punishing weather made it too costly to maintain.",
+      "expected_chapter": "VII"
+    },
+    {
+      "id": "q03",
+      "kind": "in_scope",
+      "question": "What building technique made the present Eddystone lighthouse strong enough to withstand the heaviest seas?",
+      "expected_answer": "It was built of interlocking granite blocks.",
+      "expected_chapter": "III"
+    },
+    {
+      "id": "q04",
+      "kind": "in_scope",
+      "question": "How was the Cape Hatteras lighthouse saved from the eroding shoreline in 1999?",
+      "expected_answer": "The entire tower was lifted onto rails and moved nearly nine hundred metres inland over about three weeks.",
+      "expected_chapter": "VI"
+    },
+    {
+      "id": "q05",
+      "kind": "in_scope",
+      "question": "Which lighthouse is the oldest still in use today, and who built it?",
+      "expected_answer": "The Tower of Hercules at A Coruna in Spain, built by the Romans in the second century.",
+      "expected_chapter": "II"
+    },
+    {
+      "id": "q06",
+      "kind": "in_scope",
+      "question": "Who designed the original Macquarie lighthouse and what reward did he receive?",
+      "expected_answer": "The convict architect Francis Greenway, who was granted his freedom in reward.",
+      "expected_chapter": "X"
+    },
+    {
+      "id": "q07",
+      "kind": "in_scope",
+      "question": "For what period was the Statue of Liberty officially designated a lighthouse?",
+      "expected_answer": "From 1886 to 1902.",
+      "expected_chapter": "XII"
+    },
+    {
+      "id": "q08",
+      "kind": "in_scope",
+      "question": "What made the famous 1989 photograph of the La Jument lighthouse possible?",
+      "expected_answer": "The keeper had come out believing the sound was a rescue helicopter, and an enormous wave engulfed the tower behind him as he stood in the doorway; he stepped back inside just in time.",
+      "expected_chapter": "IX"
+    },
+    {
+      "id": "q09",
+      "kind": "in_scope",
+      "question": "Why did sailors complain about the early Lindesnes light?",
+      "expected_answer": "It was a simple open coal fire that was often indistinguishable from ordinary bonfires on the shore.",
+      "expected_chapter": "VIII"
+    },
+    {
+      "id": "q10",
+      "kind": "in_scope",
+      "question": "What is unusual about the construction of the Kopu lighthouse?",
+      "expected_answer": "It was raised as a solid masonry pillar with no internal staircase in its original core; stairs were added only centuries later. It also stands inland on the island's highest hill.",
+      "expected_chapter": "XI"
+    },
+    {
+      "id": "q11",
+      "kind": "out_of_scope",
+      "question": "How tall is the Burj Khalifa?",
+      "expected_answer": "The book does not cover the Burj Khalifa.",
+      "expected_chapter": null
+    },
+    {
+      "id": "q12",
+      "kind": "out_of_scope",
+      "question": "What was the average keeper's salary at the lighthouses described in the book?",
+      "expected_answer": "The book does not state keepers' salaries.",
+      "expected_chapter": null
+    }
+  ]
+}
