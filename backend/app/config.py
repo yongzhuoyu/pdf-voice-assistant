@@ -22,15 +22,10 @@ load_dotenv(BACKEND_DIR / ".env")
 # top-level samples/ folder, the single place a human adds books from.
 DATA_DIR = BACKEND_DIR / "data"
 SAMPLES_DIR = BACKEND_DIR.parent / "samples"
-TEST_PDF = SAMPLES_DIR / "sherlock-holmes.pdf"   # the fixture used by tests + index.py
+TEST_PDF = SAMPLES_DIR / "sherlock-holmes.pdf"   # the fixture used by the tests
 CHROMA_DIR = DATA_DIR / "chroma"  # gitignored; created on first index
 
 # --- Document ---
-# Title for the bundled test PDF (samples/sherlock-holmes.pdf), used by the tests
-# and by scripts/index.py. Uploaded books take their own title from the PDF
-# metadata or filename — this default only applies to the bundled fixture.
-BOOK_TITLE = "The Adventures of Sherlock Holmes"
-
 # Upload limits — guard against a runaway indexing job on an enormous PDF.
 MAX_UPLOAD_MB = 50       # reject files larger than this
 MAX_UPLOAD_PAGES = 600   # reject books with more pages than this
