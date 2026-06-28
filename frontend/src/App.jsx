@@ -30,6 +30,7 @@ export default function App() {
   const [activeId, setActiveId] = useState(null);
   const [uploading, setUploading] = useState(null); // { id, title, progress, stage } while indexing
   const [playing, setPlaying] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState(null); // { id, title } while confirming removal
 
   const recorder = useRecorder();
   const audioRef = useRef(null);
@@ -80,8 +81,17 @@ export default function App() {
     }
   }
 
-  async function handleDelete(id) {
-    if (!window.confirm("Remove this book from the library?")) return;
+  // Two-step removal: the button opens an in-app confirmation; confirming runs
+  // the delete. We avoid window.confirm so the dialog matches the app's design.
+  function handleDelete(id) {
+    const rec = docs.find((d) => d.id === id);
+    setConfirmRemove({ id, title: rec?.title || "this book" });
+  }
+
+  async function confirmDelete() {
+    const id = confirmRemove?.id;
+    setConfirmRemove(null);
+    if (!id) return;
     try {
       await deleteDocument(id);
       const fresh = await listDocuments();
@@ -311,6 +321,55 @@ export default function App() {
       </main>
 
       <audio ref={audioRef} hidden onEnded={() => setPlaying(false)} />
+
+      {confirmRemove && (
+        <ConfirmDialog
+          title="Remove this book?"
+          body={`“${confirmRemove.title}” and everything indexed from it will be removed from your library.`}
+          confirmLabel="Remove"
+          onConfirm={confirmDelete}
+          onCancel={() => setConfirmRemove(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// In-app confirmation dialog. Replaces window.confirm so destructive actions
+// match the app's design and behave predictably (Escape and backdrop cancel,
+// the safe Cancel action is focused by default).
+function ConfirmDialog({ title, body, confirmLabel, onConfirm, onCancel }) {
+  const cancelRef = useRef(null);
+
+  useEffect(() => {
+    cancelRef.current?.focus();
+    const onKey = (e) => {
+      if (e.key === "Escape") onCancel();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onCancel]);
+
+  return (
+    <div className="modal-scrim" onMouseDown={onCancel}>
+      <div
+        className="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-title"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <h2 className="modal-title" id="confirm-title">{title}</h2>
+        <p className="modal-body">{body}</p>
+        <div className="modal-actions">
+          <button ref={cancelRef} className="modal-btn modal-cancel" onClick={onCancel}>
+            Cancel
+          </button>
+          <button className="modal-btn modal-confirm" onClick={onConfirm}>
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
